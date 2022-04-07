@@ -9,7 +9,7 @@
 #   https://github.com/mlox/mlox
 # under the MIT License:
 #   https://github.com/mlox/mlox/blob/master/License.txt
-
+import os
 import sys
 import logging
 import argparse
@@ -18,7 +18,7 @@ import re
 import colorama
 from colorama import Fore, Style
 
-from mlox.resources import user_path, update_file, UPDATE_URL
+from mlox.resources import UPDATE_URL, set_user_path, get_user_path, get_update_file
 from mlox.update import update_compressed_file
 from mlox import version
 from mlox.loadOrder import loadorder
@@ -188,9 +188,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gui",
                         help="Run the GUI.\nDefault action if no arguments are given.",
                         action="store_true")
+    parser.add_argument("--local",
+                        help="Tell the app to use a local depot for app resources.\nDefault is ./mlox.",
+                        action="store_true")
+
     add_writer_group(parser)
     add_verbosity_group(parser)
     add_developer_options(parser)
+
     return parser
 
 
@@ -265,9 +270,13 @@ def main():
         console_log_stream.setLevel(logging.WARNING)
         # Not printing everything else is handled in process_load_order(...)
 
+    # override user_path dir
+    if args.local:
+        set_user_path(os.path.join(os.getcwd(), 'mlox'))
+
     # Check Python version
     logging.debug(version.version_info())
-    logging.debug("Database Directory: %s", user_path)
+    logging.info("Database Directory: %s", get_user_path())
     python_version = sys.version[:3]
     if float(python_version) < 3:
         logging.error("This program requires at least Python version 3.")
@@ -276,8 +285,8 @@ def main():
     # Download UPDATE_URL to user_path, then extract its contents there
     if not args.nodownload:
         logging.info('Checking for database update...')
-        if update_compressed_file(update_file, UPDATE_URL, user_path):
-            logging.info('Database updated from {0}'.format(update_file))
+        if update_compressed_file(get_update_file(), UPDATE_URL, get_user_path()):
+            logging.info('Database updated from {0}'.format(get_update_file()))
 
     # If no arguments are passed or if explicitly asked to, run the GUI
     noargs = True
