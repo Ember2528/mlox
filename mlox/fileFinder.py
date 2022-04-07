@@ -121,7 +121,7 @@ def _find_appdata():
     try:
         import winreg
         try:
-            key = winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                                   r'Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders')
             vals = winreg.QueryValueEx(key, 'Local AppData')
         except WindowsError:
