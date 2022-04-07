@@ -21,3 +21,4 @@ current_loadorder.out
 build/
 .idea/
 *.egg-info/
+dist/mlox.exe
