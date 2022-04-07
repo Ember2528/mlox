@@ -299,17 +299,17 @@ def main():
         MloxGui().start()
         return
 
-    if vars(args).get('profile', False):
-        import hotshot
-        import hotshot.stats
-        prof = hotshot.Profile("mlox.prof")
-        time = prof.runcall(command_line_mode, args=args)
-        prof.close()
-        stats = hotshot.stats.load("mlox.prof")
-        stats.strip_dirs()
-        stats.sort_stats('time', 'calls')
-        stats.print_stats(20)
-        return
+    # if vars(args).get('profile', False):
+    #     import hotshot
+    #     import hotshot.stats
+    #     prof = hotshot.Profile("mlox.prof")
+    #     time = prof.runcall(command_line_mode, args=args)
+    #     prof.close()
+    #     stats = hotshot.stats.load("mlox.prof")
+    #     stats.strip_dirs()
+    #     stats.sort_stats('time', 'calls')
+    #     stats.print_stats(20)
+    #     return
 
     command_line_mode(args)
 
