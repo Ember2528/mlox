@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import locale
-VERSION = "1.0.3 (with FAT32 fix)"
+VERSION = "1.0.4"
 
 
 def about():
