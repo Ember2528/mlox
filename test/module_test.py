@@ -213,17 +213,17 @@ class ParserAndPluggraphTest(unittest.TestCase):
                    'lgnpc_aldruhn_v1_13-jms_patch.esp', 'mashed lists.esp']
 
     def test_parser_base_version_good(self):
-        myParser = self.ruleParser.rule_parser([],"",self.file_names)
+        myParser = self.ruleParser.RuleParser([], "", self.file_names)
         myParser.read_rules("../data/mlox_base.txt")
         self.assertNotEqual(myParser.version,"Unknown")
 
     def test_parser_base_version_bad(self):
-        myParser = self.ruleParser.rule_parser([],"",self.file_names)
+        myParser = self.ruleParser.RuleParser([], "", self.file_names)
         myParser.read_rules("./test1.data/mlox_base.txt")
         self.assertEqual(myParser.version,"Unknown")
 
     def test_parser_graph(self):
-        myParser = self.ruleParser.rule_parser([],"./test1.data/",self.file_names)
+        myParser = self.ruleParser.RuleParser([], "./test1.data/", self.file_names)
         myParser.read_rules("./test1.data/mlox_base.txt")
         graph=myParser.get_graph()
         self.assertEqual(graph.topo_sort(),self.test1_graph)
@@ -241,12 +241,12 @@ class LoadOrderTest(unittest.TestCase):
     Test mlox mlox.loadOrder
     TODO: Actually test anything here
     """
-    from mlox.loadOrder import loadorder
+    from mlox.loadOrder import Loadorder
     import mlox.fileFinder as fileFinder
 
     @mark.skip('Unimplemented')
     def test_File_and_Dir(self):
-        l1 = self.loadorder()
+        l1 = self.Loadorder()
         l1.datadir = "./test1.data/"
         l1.plugin_file = "./userfiles/abot.txt"
         l1.game_type = None
@@ -256,14 +256,14 @@ class LoadOrderTest(unittest.TestCase):
 
     @mark.skip('Unimplemented')
     def test_Dir(self):
-        l2 = self.loadorder()
+        l2 = self.Loadorder()
         l2.datadir = "./test1.data/"
         l2.get_data_files()
         l2.update()
 
     @mark.skip('Unimplemented')
     def test_File(self):
-        l3 = self.loadorder()
+        l3 = self.Loadorder()
         l3.read_from_file("./userfiles/abot.txt")
         l3.update()
         print(l3.explain("Morrowind.esm"))

@@ -21,7 +21,7 @@ from colorama import Fore, Style
 from mlox.resources import UPDATE_URL, set_user_path, get_user_path, get_update_file
 from mlox.update import update_compressed_file
 from mlox import version
-from mlox.loadOrder import loadorder
+from mlox.loadOrder import Loadorder
 from mlox.translations import dump_translations, _
 
 
@@ -82,7 +82,7 @@ class ListVersions(argparse.Action):
         super().__init__(option_strings=option_strings, dest=dest, default=default, nargs=0, help=self.help)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        my_loadorder = loadorder()
+        my_loadorder = Loadorder()
         my_loadorder.get_data_files()
         print(my_loadorder.listversions())
         parser.exit()
@@ -204,11 +204,11 @@ def command_line_mode(args):
     logging.info("%s %s", version.full_version(), _["Hello!"])
     if args.fromfile:
         for fromfile in args.fromfile:
-            my_loadorder = loadorder()
+            my_loadorder = Loadorder()
             my_loadorder.read_from_file(fromfile)
             process_load_order(my_loadorder, args)
         return
-    my_loadorder = loadorder()
+    my_loadorder = Loadorder()
     if args.all:
         my_loadorder.get_data_files()
     else:
