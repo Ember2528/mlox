@@ -197,7 +197,7 @@ class Loadorder:
         output = plugin_graph.explain(plugin_name, self.order)
         return output
 
-    def update(self, progress=None):
+    def update(self, progress=None, force_parse=False):
         """
         Update the load order based on input rules.
         Returns the parser's recommendations on success, or False if something went wrong.
@@ -214,7 +214,6 @@ class Loadorder:
         msgs: str = ""
 
         # check if update is needed
-        force_parse_rules = False
         sha: Optional[str] = settings_get_val('sha')
 
         # sha the rules file and compare
@@ -222,13 +221,13 @@ class Loadorder:
             file_sha = sha256sum(get_user_file())
             if sha != file_sha:
                 # rules file has changed
-                force_parse_rules = True
+                force_parse = True
                 settings_set_val('sha', file_sha)
         else:
             # no user file: always parse
-            force_parse_rules = True
+            force_parse = True
 
-        if not force_parse_rules:
+        if not force_parse:
             # deserialize graph
             if os.path.exists(get_graph_file()):
                 try:
@@ -236,13 +235,14 @@ class Loadorder:
                         plugin_graph_map = json.load(read_graph)
                         plugin_graph = pluggraph()
                         plugin_graph = plugin_graph.from_map(plugin_graph_map)
+                        order_logger.info(f"SUCCESS: Loaded chached rule graph from: {get_graph_file()}")
                 except JSONDecodeError as e:
                     order_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
                     order_logger.debug(f'Exception {str(e)}.')
 
-        order_logger.debug(f"Need to parse rules: {plugin_graph is None or force_parse_rules}")
+        order_logger.info(f"Need to parse rules: {plugin_graph is None or force_parse}")
 
-        if plugin_graph is None or force_parse_rules:
+        if plugin_graph is None or force_parse:
             # read rules from various sources, and add orderings to graph
             # if any subsequent rule causes a cycle in the current graph, it is discarded
             parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
@@ -270,6 +270,8 @@ class Loadorder:
             # serialize graph
             with open(get_graph_file(), "w") as write:
                 json.dump(vars(plugin_graph), write, indent=4)
+            order_logger.info(f"Current rule graph has been saved to: {get_graph_file()}")
+
             # serialize messages
             with open(get_parser_msg_file(), "w") as write_msg:
                 write_msg.write(msgs)

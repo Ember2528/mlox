@@ -5,6 +5,7 @@ import re
 import sys
 import tempfile
 import traceback
+from argparse import Namespace
 
 from PyQt5.QtCore import QUrl, QObject, pyqtSignal, pyqtSlot, QSize
 from PyQt5.QtGui import QImage, QIcon, QPixmap
@@ -28,13 +29,17 @@ def colorize_text(text):
         "low": "<span style='background-color: rgb(125,220,240);'>\g<0></span>",
         "medium": "<span style='background-color: rgb(255,255,180);'>\g<0></span>",
         "high": "<span style='background-color: rgb(255,180,180);'>\g<0></span>",
-        "green": "<span style='background-color: green;'>\g<0></span>",
+        "green": "<span style='background-color: rgb(80,200,120);'>\g<0></span>",
         "yellow": "<span style='background-color: yellow;'>\g<0></span>",
-        "red": "<span style='background-color: red;'>\g<0></span>"
+        "red": "<span style='background-color: rgb(238,75,43);'>\g<0></span>"
     }
 
     highlighters = [
         (re.compile(r'<hide>(.*)</hide>'), "<span style='color: black; background-color: black;'>\g<1></span>"),
+
+        # General log highlighting
+        (re.compile(r'^(SUCCESS:.*)', re.MULTILINE), bg_colors["green"]),
+
         # Spoilers require Highlighting
         (re.compile(r'^(\[CONFLICT])', re.MULTILINE), bg_colors["red"]),
         (re.compile(r'(https?://[^\s]*)', re.IGNORECASE), "<a href='\g<0>'>\g<0></a>"),  # URLs
@@ -162,7 +167,7 @@ class MloxGui(QObject):
         gui_info_stream.addFilter(FilterInfo())
         logging.getLogger('').addHandler(gui_info_stream)
 
-    def start(self):
+    def start(self, args: Namespace):
         """Display the GUI"""
         my_app = QApplication(sys.argv)
         sys.excepthook = lambda typ, val, tb: error_handler(typ, val, tb)
@@ -189,7 +194,7 @@ class MloxGui(QObject):
         self.debug_window = ScrollableDialog()
         self.clipboard = my_app.clipboard()
 
-        self.analyze_loadorder()
+        self.analyze_loadorder(force_parse=args.force_parse)
 
         sys.exit(my_app.exec())
 
@@ -202,7 +207,7 @@ class MloxGui(QObject):
         self.set_new.emit(colorize_text(self.New))
         self.set_old.emit(colorize_text(self.Old))
 
-    def analyze_loadorder(self, fromfile=None):
+    def analyze_loadorder(self, fromfile=None, force_parse=False):
         """
         This is where the magic happens
         If fromfile is None, then it operates out of the current directory.
@@ -223,7 +228,7 @@ class MloxGui(QObject):
             self.lo.get_active_plugins()
 
         progress = CustomProgressDialog()
-        self.Msg = self.lo.update(progress)
+        self.Msg = self.lo.update(progress, force_parse)
 
         # TODO: Have update always return as string, so this isn't needed
         if not self.Msg:

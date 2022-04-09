@@ -15,6 +15,7 @@ import os
 import pprint
 import re
 import sys
+from argparse import Namespace
 
 import colorama
 from colorama import Fore, Style
@@ -192,6 +193,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--local",
                         help="Tell the app to use a local depot for app resources.\nDefault is ./mlox.",
                         action="store_true")
+    parser.add_argument("--force-parse",
+                        help="Tell the app to always parse the rule files in the depot.\nDefault is False (use cached graph).",
+                        action="store_true")
 
     add_writer_group(parser)
     add_verbosity_group(parser)
@@ -257,7 +261,7 @@ def main():
 
     # parse command line arguments
     logging.debug("Command line: %s", " ".join(sys.argv))
-    args = parser.parse_args()
+    args: Namespace = parser.parse_args()
     logging.debug("Parsed Arguments: %s", pprint.pformat(args))
 
     # Handle verbosity_group
@@ -297,7 +301,7 @@ def main():
             break
     if args.gui or noargs:
         from mlox.qtGui import MloxGui
-        MloxGui().start()
+        MloxGui().start(args)
         return
 
     # if vars(args).get('profile', False):
