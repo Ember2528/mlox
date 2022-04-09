@@ -1,8 +1,13 @@
 """Handle program wide resources (files, images, etc...)"""
+import json
+import logging
 import os
+from json import JSONDecodeError
 
 from appdirs import user_data_dir
 from pkg_resources import ResourceManager
+
+res_logger = logging.getLogger('mlox.resources')
 
 resource_manager = ResourceManager()
 
@@ -17,7 +22,6 @@ if not os.path.isdir(depot_path):
 UPDATE_BASE = "mlox-data.7z"
 # update_file = os.path.join(user_path, UPDATE_BASE)
 UPDATE_URL = 'https://svn.code.sf.net/p/mlox/code/trunk/downloads/' + UPDATE_BASE
-
 
 def set_user_path(cwd):
     global depot_path
@@ -42,3 +46,32 @@ def get_user_file() -> str:
 
 def get_update_file() -> str:
     return os.path.join(depot_path, UPDATE_BASE)
+
+
+def get_graph_file() -> str:
+    return os.path.join(depot_path, "mlox_graph.json")
+
+
+def get_parser_msg_file() -> str:
+    return os.path.join(depot_path, "mlox_parser_msg.txt")
+
+
+def get_settings_file() -> str:
+    return os.path.join(depot_path, "mlox_settings.txt")
+
+
+def load_settings() -> dict:
+    settings = {}
+    if os.path.exists(get_settings_file()):
+        try:
+            with open(get_settings_file(), "r") as fs:
+                settings = json.load(fs)
+        except JSONDecodeError as e:
+            res_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
+            res_logger.debug(f'Exception {str(e)}.')
+    return settings
+
+
+def save_settings(s: dict):
+    with open(get_settings_file(), "w") as write:
+        json.dump(s, write, indent=4)
