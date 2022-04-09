@@ -1,4 +1,5 @@
 import logging
+import json
 from pprint import PrettyPrinter
 
 pluggraph_logger = logging.getLogger('mlox.pluggraph')
@@ -164,3 +165,10 @@ class pluggraph:
             pluggraph_logger.debug(PrettyPrinter(indent=4).pformat(self.nodes.items()))
             return None
         return sorted_items
+
+    def from_map(self, mapper: dict):
+        self.nodes = mapper['nodes']
+        self.incoming_count = mapper['incoming_count']
+        self.nearstart = mapper['nearstart']
+        self.nearend = mapper['nearend']
+        return self
