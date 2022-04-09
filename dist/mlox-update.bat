@@ -69,3 +69,5 @@ rem fetch and fast-forward pull mlox-rules
 cd mlox
 git fetch
 git pull --ff-only
+
+pause
