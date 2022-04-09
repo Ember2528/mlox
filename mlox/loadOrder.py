@@ -209,17 +209,20 @@ class Loadorder:
         parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
 
         # read user file
-        progress.update_value_and_label(1, "Loading user file ...")
+        if progress is not None:
+            progress.update_value_and_label(1, "Loading user file ...")
         if os.path.exists(get_user_file()):
             parser.read_rules(get_user_file(), None)
-            progress.update_value_and_label(50, "Loading base file ...")
+            if progress is not None:
+                progress.update_value_and_label(50, "Loading base file ...")
 
         # read base file
         if not parser.read_rules(get_base_file(), None):
             order_logger.error("Unable to parse 'mlox_base.txt', load order NOT sorted!")
             self.new_order = []
             return False
-        progress.update_value_and_label(90, "Parsing rules ...")
+        if progress is not None:
+            progress.update_value_and_label(90, "Parsing rules ...")
 
         # Convert the graph into a sorted list of all plugins (rules + load order)
         plugin_graph = parser.get_graph()
