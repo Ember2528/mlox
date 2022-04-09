@@ -6,8 +6,8 @@ from typing import Optional
 
 from mlox import configHandler, ruleParser, fileFinder
 from mlox.pluggraph import pluggraph
-from mlox.resources import get_base_file, get_user_file, get_graph_file, get_parser_msg_file, load_settings, \
-    save_settings
+from mlox.resources import get_base_file, get_user_file, get_graph_file, get_parser_msg_file, \
+    settings_set_val, settings_get_val
 from mlox.utils import sha256sum
 
 old_loadorder_output = "current_loadorder.out"
@@ -215,11 +215,7 @@ class Loadorder:
 
         # check if update is needed
         force_parse_rules = False
-        # TODO better settings
-        settings = load_settings()
-        sha: Optional[str] = None
-        if settings:
-            sha = settings['sha']
+        sha: Optional[str] = settings_get_val('sha')
 
         # sha the rules file and compare
         if os.path.exists(get_user_file()):
@@ -227,8 +223,7 @@ class Loadorder:
             if sha != file_sha:
                 # rules file has changed
                 force_parse_rules = True
-                settings['sha'] = file_sha
-                save_settings(settings)
+                settings_set_val('sha', file_sha)
         else:
             # no user file: always parse
             force_parse_rules = True

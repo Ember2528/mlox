@@ -3,11 +3,29 @@ import json
 import logging
 import os
 from json import JSONDecodeError
+from typing import Optional
 
 from appdirs import user_data_dir
 from pkg_resources import ResourceManager
 
 res_logger = logging.getLogger('mlox.resources')
+
+
+def get_settings_file() -> str:
+    return os.path.join(depot_path, "mlox_settings.txt")
+
+
+def settings_load():
+    global settings
+
+    if os.path.exists(get_settings_file()):
+        try:
+            with open(get_settings_file(), "r") as fs:
+                settings = json.load(fs)
+        except JSONDecodeError as e:
+            res_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
+            res_logger.debug(f'Exception {str(e)}.')
+
 
 resource_manager = ResourceManager()
 
@@ -23,12 +41,19 @@ UPDATE_BASE = "mlox-data.7z"
 # update_file = os.path.join(user_path, UPDATE_BASE)
 UPDATE_URL = 'https://svn.code.sf.net/p/mlox/code/trunk/downloads/' + UPDATE_BASE
 
-def set_user_path(cwd):
+# Settings
+settings = {}
+settings_load()
+
+
+def set_user_path(path):
     global depot_path
 
-    depot_path = cwd
+    depot_path = path
     if not os.path.isdir(depot_path):
         os.makedirs(depot_path)
+
+    settings_load()
 
 
 def get_user_path() -> str:
@@ -56,22 +81,17 @@ def get_parser_msg_file() -> str:
     return os.path.join(depot_path, "mlox_parser_msg.txt")
 
 
-def get_settings_file() -> str:
-    return os.path.join(depot_path, "mlox_settings.txt")
-
-
-def load_settings() -> dict:
-    settings = {}
-    if os.path.exists(get_settings_file()):
-        try:
-            with open(get_settings_file(), "r") as fs:
-                settings = json.load(fs)
-        except JSONDecodeError as e:
-            res_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
-            res_logger.debug(f'Exception {str(e)}.')
-    return settings
-
-
-def save_settings(s: dict):
+def settings_save():
     with open(get_settings_file(), "w") as write:
-        json.dump(s, write, indent=4)
+        json.dump(settings, write, indent=4)
+
+
+def settings_get_val(name: str) -> Optional[str]:
+    return settings.get(name)
+
+
+def settings_set_val(name: str, value, do_save=True):
+    settings[name] = value
+    if do_save:
+        settings_save()
+
