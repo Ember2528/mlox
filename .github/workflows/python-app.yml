@@ -41,5 +41,5 @@ jobs:
       with:
         draft: true
         generateReleaseNotes: true
-        artifacts: "dist/mlox.exe"
+        artifacts: "dist/mlox.exe,dist/mlox-update.bat"
         token: ${{ secrets.GITHUB_TOKEN }}
