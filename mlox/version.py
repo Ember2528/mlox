@@ -1,8 +1,8 @@
-
+import locale
 import os
 import subprocess
 import sys
-import locale
+
 VERSION = "1.0.4"
 
 
@@ -10,7 +10,7 @@ def about():
     """
     :return: a nice statement about the program
     """
-    output  = "mlox - the elder scrolls Mod Load Order eXpert\n"
+    output = "mlox - the elder scrolls Mod Load Order eXpert\n"
     output += "Copyright (c) 2009-2017\n John Moonsugar, an alias\n Dragon32\n Arthur Moore\n"
     output += "Distributed as part of the mlox project:\n https://github.com/mlox/mlox\n"
     output += "under the MIT License:\n https://github.com/mlox/mlox/blob/master/License.txt\n"
@@ -30,7 +30,7 @@ def requirement_status() -> dict:
         output["PyQt5"] = None
     try:
         from appdirs import __version_info__ as appdirs_version
-        output["appdirs"] = "Version: {0}".format(".".join(list(map(str,appdirs_version))))
+        output["appdirs"] = "Version: {0}".format(".".join(list(map(str, appdirs_version))))
     except ImportError:
         output["appdirs"] = None
     try:

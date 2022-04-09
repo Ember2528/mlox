@@ -22,3 +22,4 @@ build/
 .idea/
 *.egg-info/
 dist/mlox.exe
+.run/mlox local.run.xml

@@ -1,20 +1,21 @@
 import logging
-import re
 import os
+import re
 from functools import reduce
 
 config_logger = logging.getLogger('mlox.configHandler')
 
 MIN_SAFE_TIMESTAMP = 315529200  # safe file timestamp for both NTFS and FAT32 fs
 
+
 def caseless_uniq(un_uniqed_files):
     """
     Given a list, return a list of unique strings, and a list of duplicates.
     This is a caseless comparison, so 'Test' and 'test' are considered duplicates.
     """
-    lower_files = []    # Use this to allow for easy use of the 'in' keyword
-    unique_files = []   # Guaranteed case insensitive unique
-    filtered = []       # any duplicates from the input
+    lower_files = []  # Use this to allow for easy use of the 'in' keyword
+    unique_files = []  # Guaranteed case insensitive unique
+    filtered = []  # any duplicates from the input
 
     for aFile in un_uniqed_files:
         if aFile.lower() in lower_files:
@@ -22,7 +23,7 @@ def caseless_uniq(un_uniqed_files):
         else:
             unique_files.append(aFile)
             lower_files.append(aFile.lower())
-    return(unique_files, filtered)
+    return (unique_files, filtered)
 
 
 def partition_esps_and_esms(filelist):
@@ -35,7 +36,7 @@ def partition_esps_and_esms(filelist):
             esp_files.append(filename)
         elif ext == ".esm":
             esm_files.append(filename)
-    return(esm_files, esp_files)
+    return (esm_files, esp_files)
 
 
 class configHandler():
@@ -54,29 +55,31 @@ class configHandler():
     # pattern to match plugins in FromFile (somewhat looser than re_gamefile)
     # this may be too sloppy, we could also look for the same prefix pattern,
     # and remove that if present on all lines.
-    re_sloppy_plugin = re.compile(r'^(?:(?:DBG:\s+)?[_\*]\d\d\d[_\*]\s+|GameFile\d+=|content=|\d{1,3} {1,2}|Plugin\d+\s*=\s*)?(.+\.es[mp]\b)', re.IGNORECASE)
+    re_sloppy_plugin = re.compile(
+        r'^(?:(?:DBG:\s+)?[_\*]\d\d\d[_\*]\s+|GameFile\d+=|content=|\d{1,3} {1,2}|Plugin\d+\s*=\s*)?(.+\.es[mp]\b)',
+        re.IGNORECASE)
     # pattern used to match a string that should only contain a plugin name, no slop
     re_plugin = re.compile(r'^(\S.*?\.es[mp]\b)([\s]*)', re.IGNORECASE)
-    #The regular expressions used to parse the file
+    # The regular expressions used to parse the file
     read_regexes = {
-        "Morrowind" : re_gamefile,
-        "Oblivion"  : re_plugin,
-        "raw"       : re_plugin,
-        None        : re_sloppy_plugin
+        "Morrowind": re_gamefile,
+        "Oblivion": re_plugin,
+        "raw": re_plugin,
+        None: re_sloppy_plugin
     }
-    #The path to the configuration file
+    # The path to the configuration file
     configFile = None
-    #The type of config file (Is it a 'Morrowind.ini', raw, or something else?)
+    # The type of config file (Is it a 'Morrowind.ini', raw, or something else?)
     fileType = None
 
-    def __init__(self, configFile, fileType = None):
+    def __init__(self, configFile, fileType=None):
         self.configFile = configFile
         try:
-            self.read_regexes[fileType] # Note:  This might not seem to do anything, but it serves as a runtime check that fileType is an accepted value.
+            self.read_regexes[
+                fileType]  # Note:  This might not seem to do anything, but it serves as a runtime check that fileType is an accepted value.
             self.fileType = fileType
         except:
             config_logger.warning("\"{0}\" is not a recognized file type!".format(fileType))
-
 
     def read(self):
         """
@@ -129,7 +132,7 @@ class configHandler():
         if self.fileType == "raw":
             return self._write_raw(list_of_plugins)
 
-        config_logger.error("Can not write to %s configuration files.",self.fileType)
+        config_logger.error("Can not write to %s configuration files.", self.fileType)
         return False
 
     def _write_morrowind(self, list_of_plugins):
@@ -161,8 +164,8 @@ class configHandler():
         except IndexError:
             config_logger.error("Configuration file does not have a '[Game Files]' section!")
             return False
-        sections[config_index+1] = out_str
-        file_buffer = reduce(lambda x,y: x+y,sections)
+        sections[config_index + 1] = out_str
+        file_buffer = reduce(lambda x, y: x + y, sections)
 
         # Write the modified buffer to the configuration file
         try:
@@ -209,19 +212,19 @@ class dataDirHandler:
     def __init__(self, data_files_path):
         self.path = data_files_path
 
-    #Get the directory name in a printable form
+    # Get the directory name in a printable form
     def getDir(self):
         return self.path
 
-    def _full_path(self,a_file):
+    def _full_path(self, a_file):
         """Convenience function to return the full path to a file."""
-        return os.path.join(self.path,a_file)
+        return os.path.join(self.path, a_file)
 
     def _sort_by_date(self, list_of_plugins):
         """Sort a list of plugin files by modification date"""
         dated_plugins = [(os.path.getmtime(self._full_path(a_plugin)), a_plugin) for a_plugin in list_of_plugins]
         dated_plugins.sort()
-        return([x[1] for x in dated_plugins])
+        return ([x[1] for x in dated_plugins])
 
     def read(self):
         """
@@ -237,7 +240,7 @@ class dataDirHandler:
             logging.warning("Duplicate plugin found in data directory: {0}".format(f))
         # sort the plugins into load order by modification date (esm's first)
         (esm_files, esp_files) = partition_esps_and_esms(files)
-        files  = self._sort_by_date(esm_files)
+        files = self._sort_by_date(esm_files)
         files += self._sort_by_date(esp_files)
         return files
 
@@ -249,9 +252,9 @@ class dataDirHandler:
         These files are fixed to be compatible with `tes3cmd resetdates`.
         :return: True on success, or False on failure
         """
-        tes3cmd_resetdates_morrowind_mtime = 1024695106 # Fri Jun 21 17:31:46 2002
-        tes3cmd_resetdates_tribunal_mtime  = 1035940926 # Tue Oct 29 20:22:06 2002
-        tes3cmd_resetdates_bloodmoon_mtime = 1051807050 # Thu May  1 12:37:30 2003
+        tes3cmd_resetdates_morrowind_mtime = 1024695106  # Fri Jun 21 17:31:46 2002
+        tes3cmd_resetdates_tribunal_mtime = 1035940926  # Tue Oct 29 20:22:06 2002
+        tes3cmd_resetdates_bloodmoon_mtime = 1051807050  # Thu May  1 12:37:30 2003
 
         mtime = tes3cmd_resetdates_morrowind_mtime
         try:
@@ -266,7 +269,7 @@ class dataDirHandler:
                     mtime = tes3cmd_resetdates_bloodmoon_mtime
                     os.utime(self._full_path("Bloodmoon.bsa"), (MIN_SAFE_TIMESTAMP, mtime))
                 else:
-                    mtime += 60 # standard 1 minute Mash step
+                    mtime += 60  # standard 1 minute Mash step
                 os.utime(self._full_path(a_plugin), (MIN_SAFE_TIMESTAMP, mtime))
         except TypeError:
             config_logger.error(

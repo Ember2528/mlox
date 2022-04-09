@@ -1,8 +1,9 @@
-import os
-import re
 import io
 import logging
+import os
+import re
 from pprint import PrettyPrinter
+
 from mlox import fileFinder, pluggraph
 
 # comments start with ';'

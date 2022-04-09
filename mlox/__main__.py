@@ -9,20 +9,21 @@
 #   https://github.com/mlox/mlox
 # under the MIT License:
 #   https://github.com/mlox/mlox/blob/master/License.txt
-import os
-import sys
-import logging
 import argparse
+import logging
+import os
 import pprint
 import re
+import sys
+
 import colorama
 from colorama import Fore, Style
 
-from mlox.resources import UPDATE_URL, set_user_path, get_user_path, get_update_file
-from mlox.update import update_compressed_file
 from mlox import version
 from mlox.loadOrder import Loadorder
+from mlox.resources import UPDATE_URL, set_user_path, get_user_path, get_update_file
 from mlox.translations import dump_translations, _
+from mlox.update import update_compressed_file
 
 
 def single_spaced(in_string):
@@ -40,10 +41,10 @@ def single_spaced(in_string):
 class ColorFormatConsole(logging.Formatter):
     """Color code the logging information on Unix terminals"""
     levels = {
-        'DEBUG':    '',
-        'INFO':     '',
-        'WARNING':  Fore.YELLOW,
-        'ERROR':    Fore.RED,
+        'DEBUG': '',
+        'INFO': '',
+        'WARNING': Fore.YELLOW,
+        'ERROR': Fore.RED,
         'CRITICAL': Fore.RED
     }
 

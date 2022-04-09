@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 from mlox import configHandler, ruleParser, fileFinder
 from mlox.resources import get_base_file, get_user_file
 

@@ -10,7 +10,7 @@ from PyQt5.QtCore import QUrl, QObject, pyqtSignal, pyqtSlot, QSize
 from PyQt5.QtGui import QImage, QIcon, QPixmap
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtQuick import QQuickImageProvider
-from PyQt5.QtWidgets import QApplication, QDialog, QPlainTextEdit, QMessageBox, QProgressDialog, QProgressBar
+from PyQt5.QtWidgets import QApplication, QDialog, QPlainTextEdit, QMessageBox, QProgressDialog
 
 from mlox import version
 from mlox.loadOrder import Loadorder

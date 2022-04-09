@@ -1,7 +1,8 @@
 """Handle program wide resources (files, images, etc...)"""
 import os
-from pkg_resources import ResourceManager
+
 from appdirs import user_data_dir
+from pkg_resources import ResourceManager
 
 resource_manager = ResourceManager()
 

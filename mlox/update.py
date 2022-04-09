@@ -2,10 +2,10 @@
 Provides everything needed to preform auto updates of one or more files.
 """
 
-import os
-import urllib.request
-import subprocess
 import logging
+import os
+import subprocess
+import urllib.request
 
 from mlox.version import requirement_status
 
