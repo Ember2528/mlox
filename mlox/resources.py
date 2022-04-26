@@ -39,7 +39,7 @@ if not os.path.isdir(depot_path):
 # For the updater
 UPDATE_BASE = "mlox-data.7z"
 # update_file = os.path.join(user_path, UPDATE_BASE)
-UPDATE_URL = 'https://svn.code.sf.net/p/mlox/code/trunk/downloads/' + UPDATE_BASE
+UPDATE_URL = 'https://github.com/rfuzzo/mlox/raw/master/Assets/' + UPDATE_BASE
 
 # Settings
 settings = {}
