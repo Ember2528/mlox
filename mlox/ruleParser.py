@@ -272,7 +272,7 @@ class RuleParser:
             n_order += 1
             if rule == "ORDER":
                 if prev is not None:
-                    self.graph.add_edge(self._where(), prev, p)
+                    self.graph.add_edge(self._where(), prev, p, self.out_stream)
                 prev = p
             elif rule == "NEARSTART":
                 self.graph.nearstart.append(p)

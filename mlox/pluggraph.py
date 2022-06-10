@@ -40,7 +40,7 @@ class pluggraph:
                 stack.extend([child for child in self.nodes[p] if not child in seen])
         return (False)
 
-    def add_edge(self, where, plug1, plug2):
+    def add_edge(self, where, plug1, plug2, out_stream=None):
         """Add an edge to our graph connecting plug1 to plug2, which means
         that plug2 follows plug1 in the load order. Since we check every new
         edge to see if it will make a cycle, the process of adding all edges
@@ -61,6 +61,8 @@ class pluggraph:
                 pluggraph_logger.debug(cycle_detected)
             else:
                 pluggraph_logger.warning(cycle_detected)
+                if out_stream is not None:
+                    print(f"WARNING {cycle_detected}", file=out_stream)
             return False
         self.nodes.setdefault(plug1, [])
         if plug2 in self.nodes[plug1]:  # edge already exists

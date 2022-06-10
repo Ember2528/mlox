@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import io
 from json import JSONDecodeError
 from typing import Optional
 
@@ -106,7 +107,7 @@ class Loadorder:
             out += "{0:20} {1:20} {2}\n".format(str(file_ver), str(desc_ver), self.caseless.truename(p))
         return out
 
-    def add_current_order(self, graph):
+    def add_current_order(self, graph, out_stream=None):
         """
         Add the current load order as a pseudo rule set.
 
@@ -127,19 +128,19 @@ class Loadorder:
 
         # make ordering pseudo-rules for esms to follow official .esms
         if self.game_type == "Morrowind":
-            graph.add_edge("", "morrowind.esm", "tribunal.esm")
-            graph.add_edge("", "tribunal.esm", "bloodmoon.esm")
+            graph.add_edge("", "morrowind.esm", "tribunal.esm", out_stream)
+            graph.add_edge("", "tribunal.esm", "bloodmoon.esm", out_stream)
             # Make all user's .esm files depend on bloodmoon.esm
             for p in self.order:
                 if p[-4:] == ".esm":
                     if p not in ("morrowind.esm", "tribunal.esm", "bloodmoon.esm"):
-                        graph.add_edge("", "bloodmoon.esm", p)
+                        graph.add_edge("", "bloodmoon.esm", p, out_stream)
 
         # make ordering pseudo-rules from nearend info
         kingyo_fun = [x for x in graph.nearend if x in self.order]
         for p_end in kingyo_fun:
             for p in [x for x in self.order if x != p_end]:
-                graph.add_edge("", p, p_end)
+                graph.add_edge("", p, p_end, out_stream)
         # make ordering pseudo-rules from current load order.
         prev_i = 0
         graph.nodes.setdefault(self.order[prev_i], [])
@@ -151,7 +152,7 @@ class Loadorder:
                 # previous ancestor we can successfully link and edge from.
                 for i in range(prev_i, 0, -1):
                     if self.order[i] not in graph.nearstart and self.order[i] not in graph.nearend:
-                        if graph.add_edge("", self.order[i], self.order[curr_i]):
+                        if graph.add_edge("", self.order[i], self.order[curr_i], out_stream):
                             break
             prev_i = curr_i
 
@@ -184,7 +185,7 @@ class Loadorder:
         return formatted
 
     def explain(self, plugin_name, base_only=False):
-        """Explain why a mod is in it's current position"""
+        """Explain why a mod is in its current position"""
         parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
         if os.path.exists(get_user_file()):
             parser.read_rules(get_user_file())
@@ -211,21 +212,29 @@ class Loadorder:
             order_logger.debug("  " + p)
 
         plugin_graph: Optional[pluggraph] = None
-        msgs: str = ""
+        out_stream = io.StringIO()
 
         # check if update is needed
-        sha: Optional[str] = settings_get_val('sha')
-
-        # sha the rules file and compare
-        if os.path.exists(get_user_file()):
-            file_sha = sha256sum(get_user_file())
+        if not force_parse:
+            # sha the base rules and compare
+            sha: Optional[str] = settings_get_val('sha_base')
+            file_sha = sha256sum(get_base_file())
             if sha != file_sha:
                 # rules file has changed
                 force_parse = True
-                settings_set_val('sha', file_sha)
-        else:
-            # no user file: always parse
-            force_parse = True
+                settings_set_val('sha_base', file_sha)
+
+            # sha the rules file and compare
+            sha: Optional[str] = settings_get_val('sha')
+            if os.path.exists(get_user_file()):
+                file_sha = sha256sum(get_user_file())
+                if sha != file_sha:
+                    # rules file has changed
+                    force_parse = True
+                    settings_set_val('sha', file_sha)
+            else:
+                # no user file: always parse
+                force_parse = True
 
         if not force_parse:
             # deserialize graph
@@ -235,9 +244,17 @@ class Loadorder:
                         plugin_graph_map = json.load(read_graph)
                         plugin_graph = pluggraph()
                         plugin_graph = plugin_graph.from_map(plugin_graph_map)
-                        order_logger.info(f"SUCCESS: Loaded chached rule graph from: {get_graph_file()}")
+                        order_logger.info(f"SUCCESS: Loaded cached rule graph from: {get_graph_file()}")
                 except JSONDecodeError as e:
                     order_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
+                    order_logger.debug(f'Exception {str(e)}.')
+            # deserialize messages
+            if os.path.exists(get_parser_msg_file()):
+                try:
+                    with open(get_parser_msg_file(), "r") as read_msg:
+                        print(read_msg.read(), file=out_stream)
+                except JSONDecodeError as e:
+                    order_logger.warning(f'Unable to deserialize messages from {get_parser_msg_file()}.')
                     order_logger.debug(f'Exception {str(e)}.')
 
         order_logger.info(f"Need to parse rules: {plugin_graph is None or force_parse}")
@@ -265,27 +282,17 @@ class Loadorder:
 
             # Convert the graph into a sorted list of all plugins (rules + load order)
             plugin_graph = parser.get_graph()
-            msgs = parser.get_messages()
+            print(parser.get_messages(), file=out_stream)
 
             # serialize graph
             with open(get_graph_file(), "w") as write:
                 json.dump(vars(plugin_graph), write, indent=4)
             order_logger.info(f"Current rule graph has been saved to: {get_graph_file()}")
-
             # serialize messages
             with open(get_parser_msg_file(), "w") as write_msg:
-                write_msg.write(msgs)
-        else:
-            # deserialize messages
-            if os.path.exists(get_parser_msg_file()):
-                try:
-                    with open(get_parser_msg_file(), "r") as read_msg:
-                        msgs = read_msg.read()
-                except JSONDecodeError as e:
-                    order_logger.warning(f'Unable to deserialize messages from {get_parser_msg_file()}.')
-                    order_logger.debug(f'Exception {str(e)}.')
+                write_msg.write(out_stream.getvalue())
 
-        self.add_current_order(plugin_graph)  # tertiary order "pseudo-rules" from current load order
+        self.add_current_order(plugin_graph, out_stream)  # tertiary order "pseudo-rules" from current load order
         sorted_plugins = plugin_graph.topo_sort()
 
         # The "sorted" list will be a superset of all known plugin files,
@@ -315,7 +322,7 @@ class Loadorder:
             configHandler.configHandler(old_loadorder_output, "raw").write(self.order)
             configHandler.configHandler(new_loadorder_output, "raw").write(self.new_order)
 
-        return msgs
+        return out_stream.getvalue()
 
     def write_new_order(self):
         """Write/save the new order to the directory and config file."""
