@@ -31,14 +31,14 @@ class pluggraph:
         """Return True if startnode can reach plugin in the graph, False otherwise."""
         stack = [startnode]
         seen = {}
-        while stack != []:
+        while stack:
             p = stack.pop()
             if p == plugin:
-                return (True)
+                return True, stack
             seen[p] = True
             if p in self.nodes:
-                stack.extend([child for child in self.nodes[p] if not child in seen])
-        return (False)
+                stack.extend([child for child in self.nodes[p] if child not in seen])
+        return False, stack
 
     def add_edge(self, where, plug1, plug2, out_stream=None):
         """Add an edge to our graph connecting plug1 to plug2, which means
@@ -50,13 +50,19 @@ class pluggraph:
         # before adding edge from plug1 to plug2 (meaning plug1 is parent of plug2),
         # we look to see if plug2 is already a parent of plug1, if so, we have
         # detected a cycle, which we disallow.
-        if self.can_reach(plug2, plug1):
+        can_reach, stack = self.can_reach(plug2, plug1)
+        if can_reach:
             # (where == "") when adding edges from psuedo-rules we
             # create from our current plugin list, We ignore cycles in
             # this case because they do not matter.
             # (where != "") when it is an edge from a rules file, and in
             # that case we do want to see cycle errors.
             cycle_detected = "%s: Cycle detected, not adding: \"%s\" -> \"%s\"" % (where, plug1, plug2)
+
+            # cycle_detected += f"\nStack:\n"
+            # for node in stack:
+            #     cycle_detected += f">   {node}\n"
+
             if where == "":
                 pluggraph_logger.debug(cycle_detected)
             else:
@@ -124,7 +130,8 @@ class pluggraph:
                 leftover = []
                 while len(roots) > 0:
                     r = roots.pop(0)
-                    if self.can_reach(r, p):
+                    can_reach, stack = self.can_reach(r, p)
+                    if can_reach:
                         removed.append(r)
                     else:
                         leftover.append(r)

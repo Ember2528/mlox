@@ -214,11 +214,13 @@ def command_line_mode(args):
             process_load_order(my_loadorder, args)
         return
     my_loadorder = Loadorder()
-    if args.all:
-        my_loadorder.get_data_files()
-    else:
-        my_loadorder.get_active_plugins()
-    process_load_order(my_loadorder, args)
+    if not args.warningsonly:
+        if args.all:
+            my_loadorder.get_data_files()
+        else:
+            my_loadorder.get_active_plugins()
+    error_code = process_load_order(my_loadorder, args)
+    return error_code
 
 
 def process_load_order(a_loadorder, args):
@@ -227,23 +229,44 @@ def process_load_order(a_loadorder, args):
     These are things users can do or see with a load order.
     No matter how the list of plugins is obtained, what's done here stays the same.
     """
+    log = ""
     if args.explain:
-        print(a_loadorder.explain(args.explain[0], args.base_only))
-        return
+        log = a_loadorder.explain(args.explain[0], args.base_only)
+        print(log)
+        return 0
     if args.quiet:
-        a_loadorder.update()
+        a_loadorder.update(None, args.force_parse, args.warningsonly)
     else:
-        print(a_loadorder.update())
+        log = a_loadorder.update(None, args.force_parse, args.warningsonly)
+        print(log)
+
     if args.warningsonly:
-        return
+        # error codes
+        # check warnings
+        has_warnings = False
+        has_errors = False
+        for line in log.split('\n'):
+            if "WARNING" in line:
+                has_warnings = True
+            if "ERROR" in line:
+                has_errors = True
+
+        if has_errors:
+            return 1
+        elif has_warnings:
+            return 2
+        else:
+            return 0
+
     print("{0:-^80}".format('[New Load Order]'))
     for plugin in a_loadorder.get_new_order():
         print(plugin)
     if args.update:
         a_loadorder.write_new_order()
         print("{0:-^80}".format('[LOAD ORDER SAVED]'))
-        return
+        return 0
     print("{0:-^80}".format('[END PROPOSED LOAD ORDER]'))
+    return 0
 
 
 def main():
@@ -316,7 +339,8 @@ def main():
     #     stats.print_stats(20)
     #     return
 
-    command_line_mode(args)
+    error_code = command_line_mode(args)
+    sys.exit(error_code)
 
 
 if __name__ == "__main__":

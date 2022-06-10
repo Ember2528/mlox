@@ -207,7 +207,7 @@ class MloxGui(QObject):
         self.set_new.emit(colorize_text(self.New))
         self.set_old.emit(colorize_text(self.Old))
 
-    def analyze_loadorder(self, fromfile=None, force_parse=False):
+    def analyze_loadorder(self, fromfile=None, force_parse=False, cache=True):
         """
         This is where the magic happens
         If fromfile is None, then it operates out of the current directory.
@@ -228,11 +228,8 @@ class MloxGui(QObject):
             self.lo.get_active_plugins()
 
         progress = CustomProgressDialog()
-        self.Msg = self.lo.update(progress, force_parse)
+        self.Msg = self.lo.update(progress, force_parse, cache)
 
-        # TODO: Have update always return as string, so this isn't needed
-        if not self.Msg:
-            self.Msg = ""
         for p in self.lo.get_original_order():
             self.Old += p + '\n'
         for p in self.lo.get_new_order():

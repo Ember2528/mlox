@@ -198,18 +198,19 @@ class Loadorder:
         output = plugin_graph.explain(plugin_name, self.order)
         return output
 
-    def update(self, progress=None, force_parse=False):
+    def update(self, progress=None, force_parse=False, warningsonly=False, cache=True):
         """
         Update the load order based on input rules.
-        Returns the parser's recommendations on success, or False if something went wrong.
         """
         self.is_sorted = False
-        if not self.order:
-            order_logger.error("No plugins detected!\nmlox needs to run somewhere under where the game is installed.")
-            return False
-        order_logger.debug("Initial load order:")
-        for p in self.get_original_order():
-            order_logger.debug("  " + p)
+        if not warningsonly:
+            if not self.order:
+                err = "No plugins detected!\nmlox needs to run somewhere under where the game is installed."
+                order_logger.error(err)
+                return f"ERROR {err}"
+            order_logger.debug("Initial load order:")
+            for p in self.get_original_order():
+                order_logger.debug("  " + p)
 
         plugin_graph: Optional[pluggraph] = None
         out_stream = io.StringIO()
@@ -236,7 +237,6 @@ class Loadorder:
                 # no user file: always parse
                 force_parse = True
 
-        if not force_parse:
             # deserialize graph
             if os.path.exists(get_graph_file()):
                 try:
@@ -274,9 +274,10 @@ class Loadorder:
 
             # read base file
             if not parser.read_rules(get_base_file(), None):
-                order_logger.error("Unable to parse 'mlox_base.txt', load order NOT sorted!")
+                err = "Unable to parse 'mlox_base.txt', load order NOT sorted!"
+                order_logger.error(err)
                 self.new_order = []
-                return False
+                return f"ERROR {err}"
             if progress is not None:
                 progress.update_value_and_label(90, "Parsing rules ...")
 
@@ -285,15 +286,19 @@ class Loadorder:
             print(parser.get_messages(), file=out_stream)
 
             # serialize graph
-            with open(get_graph_file(), "w") as write:
-                json.dump(vars(plugin_graph), write, indent=4)
-            order_logger.info(f"Current rule graph has been saved to: {get_graph_file()}")
-            # serialize messages
-            with open(get_parser_msg_file(), "w") as write_msg:
-                write_msg.write(out_stream.getvalue())
+            if cache:
+                with open(get_graph_file(), "w") as write:
+                    json.dump(vars(plugin_graph), write, indent=4)
+                order_logger.info(f"Current rule graph has been saved to: {get_graph_file()}")
+                # serialize messages
+                with open(get_parser_msg_file(), "w") as write_msg:
+                    write_msg.write(out_stream.getvalue())
 
         self.add_current_order(plugin_graph, out_stream)  # tertiary order "pseudo-rules" from current load order
         sorted_plugins = plugin_graph.topo_sort()
+
+        if warningsonly:
+            return out_stream.getvalue()
 
         # The "sorted" list will be a superset of all known plugin files,
         # but we only care about active plugins.
@@ -307,10 +312,11 @@ class Loadorder:
             order_logger.debug("  " + p)
 
         if len(self.new_order) != len(self.order):
+            err = f"sanity check: len(self.new_order {len(self.new_order)}) != len(self.order {len(self.order)})"
             order_logger.error("sanity check: len(self.new_order %d) != len(self.order %d)", len(self.new_order),
                                len(self.order))
             self.new_order = []
-            return False
+            return f"ERROR {err}"
 
         if self.order == new_order_cname:
             order_logger.info("[Plugins already in sorted order. No sorting needed!]")
