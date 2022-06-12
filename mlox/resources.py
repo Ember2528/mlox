@@ -33,13 +33,12 @@ depot_path = user_data_dir('mlox', 'mlox')
 if not os.path.isdir(depot_path):
     os.makedirs(depot_path)
 
-# base_file = os.path.join(user_path, "mlox_base.txt")
-# user_file = os.path.join(user_path, "mlox_user.txt")
-
 # For the updater
-UPDATE_BASE = "mlox-data.7z"
-# update_file = os.path.join(user_path, UPDATE_BASE)
-UPDATE_URL = 'https://github.com/rfuzzo/mlox/raw/master/Assets/' + UPDATE_BASE
+UPDATE_BASE = "mlox_base.txt"
+UPDATE_USER = "mlox_user.txt"
+UPDATE_URL = 'https://github.com/DanaePlays/mlox-rules/raw/main/'
+UPDATE_URL_BASE = UPDATE_URL + UPDATE_BASE
+UPDATE_URL_USER = UPDATE_URL + UPDATE_USER
 
 # Settings
 settings = {}
@@ -62,15 +61,11 @@ def get_user_path() -> str:
 
 
 def get_base_file() -> str:
-    return os.path.join(depot_path, "mlox_base.txt")
+    return os.path.join(depot_path, UPDATE_BASE)
 
 
 def get_user_file() -> str:
-    return os.path.join(depot_path, "mlox_user.txt")
-
-
-def get_update_file() -> str:
-    return os.path.join(depot_path, UPDATE_BASE)
+    return os.path.join(depot_path, UPDATE_USER)
 
 
 def get_graph_file() -> str:

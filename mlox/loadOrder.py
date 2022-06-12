@@ -237,6 +237,7 @@ class Loadorder:
                 # no user file: always parse
                 force_parse = True
 
+        if not force_parse:
             # deserialize graph
             if os.path.exists(get_graph_file()):
                 try:

@@ -22,9 +22,9 @@ from colorama import Fore, Style
 
 from mlox import version
 from mlox.loadOrder import Loadorder
-from mlox.resources import UPDATE_URL, set_user_path, get_user_path, get_update_file
+from mlox.resources import UPDATE_URL_USER, UPDATE_URL_BASE, set_user_path, get_user_path, get_base_file, get_user_file
 from mlox.translations import dump_translations, _
-from mlox.update import update_compressed_file
+from mlox.update import update_file
 
 
 def single_spaced(in_string):
@@ -310,11 +310,14 @@ def main():
         logging.error("This program requires at least Python version 3.")
         parser.exit(1)
 
-    # Download UPDATE_URL to user_path, then extract its contents there
+    # Download rules to user_path
     if not args.nodownload:
-        logging.info('Checking for database update...')
-        if update_compressed_file(get_update_file(), UPDATE_URL, get_user_path()):
-            logging.info('Database updated from {0}'.format(get_update_file()))
+        logging.info('Checking for base database update...')
+        if update_file(get_base_file(), UPDATE_URL_BASE):
+            logging.info(f'Database updated from {UPDATE_URL_BASE}')
+        logging.info('Checking for user database update...')
+        if update_file(get_user_file(), UPDATE_URL_USER):
+            logging.info(f'Database updated from {UPDATE_URL_USER}')
 
     # If no arguments are passed or if explicitly asked to, run the GUI
     noargs = True

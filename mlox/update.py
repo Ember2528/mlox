@@ -118,10 +118,10 @@ def download_file(local_file, url) -> bool:
     return True
 
 
-def update_compressed_file(file_path, url, directory) -> bool:
+def update_file(file_path, url) -> bool:
     """
-    Check if a compressed file needs updating.
-    If it does, download it, and extract it to a directory
+    Check if a file needs updating.
+    If it does, download it to a directory
     """
     if not remote_file_changed(file_path, url):
         update_logger.info('No update necessary for file {0}'.format(file_path))
@@ -131,6 +131,16 @@ def update_compressed_file(file_path, url, directory) -> bool:
         update_logger.error('Download failed for {0}'.format(file_path))
         return False
     update_logger.info('Downloaded {0}'.format(file_path))
+    return True
+
+
+def update_compressed_file(file_path, url, directory) -> bool:
+    """
+    Check if a compressed file needs updating.
+    If it does, download it, and extract it to a directory
+    """
+    update_file(file_path, url)
+
     if not extract_file(file_path, directory):
         update_logger.error('Extraction failed for {0}'.format(file_path))
         # Needed, so the updater properly runs in the future
