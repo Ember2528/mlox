@@ -36,6 +36,8 @@ if not os.path.isdir(depot_path):
 # For the updater
 UPDATE_BASE = "mlox_base.txt"
 UPDATE_USER = "mlox_user.txt"
+UPDATE_MY_USER = "mlox_my_rules.txt"
+
 UPDATE_URL = 'https://github.com/DanaePlays/mlox-rules/raw/main/'
 UPDATE_URL_BASE = UPDATE_URL + UPDATE_BASE
 UPDATE_URL_USER = UPDATE_URL + UPDATE_USER
@@ -66,6 +68,10 @@ def get_base_file() -> str:
 
 def get_user_file() -> str:
     return os.path.join(depot_path, UPDATE_USER)
+
+
+def get_my_user_file() -> str:
+    return os.path.join(depot_path, UPDATE_MY_USER)
 
 
 def get_graph_file() -> str:

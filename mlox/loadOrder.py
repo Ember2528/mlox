@@ -8,7 +8,7 @@ from typing import Optional
 from mlox import configHandler, ruleParser, fileFinder
 from mlox.pluggraph import pluggraph
 from mlox.resources import get_base_file, get_user_file, get_graph_file, get_parser_msg_file, \
-    settings_set_val, settings_get_val
+    settings_set_val, settings_get_val, get_my_user_file
 from mlox.utils import sha256sum
 
 old_loadorder_output = "current_loadorder.out"
@@ -225,7 +225,7 @@ class Loadorder:
                 force_parse = True
                 settings_set_val('sha_base', file_sha)
 
-            # sha the rules file and compare
+            # sha the user rules file and compare
             sha: Optional[str] = settings_get_val('sha')
             if os.path.exists(get_user_file()):
                 file_sha = sha256sum(get_user_file())
@@ -233,9 +233,15 @@ class Loadorder:
                     # rules file has changed
                     force_parse = True
                     settings_set_val('sha', file_sha)
-            else:
-                # no user file: always parse
-                force_parse = True
+
+            # sha the my_rules file and compare
+            sha: Optional[str] = settings_get_val('sha_my')
+            if os.path.exists(get_my_user_file()):
+                file_sha = sha256sum(get_my_user_file())
+                if sha != file_sha:
+                    # rules file has changed
+                    force_parse = True
+                    settings_set_val('sha_my', file_sha)
 
         if not force_parse:
             # deserialize graph
@@ -265,15 +271,21 @@ class Loadorder:
             # if any subsequent rule causes a cycle in the current graph, it is discarded
             parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
 
+            # read my user file
+            if progress is not None:
+                progress.update_value_and_label(1, "Loading my rules file ...")
+            if os.path.exists(get_my_user_file()):
+                parser.read_rules(get_my_user_file(), None)
+
             # read user file
             if progress is not None:
-                progress.update_value_and_label(1, "Loading user file ...")
+                progress.update_value_and_label(25, "Loading user file ...")
             if os.path.exists(get_user_file()):
                 parser.read_rules(get_user_file(), None)
-                if progress is not None:
-                    progress.update_value_and_label(50, "Loading base file ...")
 
             # read base file
+            if progress is not None:
+                progress.update_value_and_label(50, "Loading base file ...")
             if not parser.read_rules(get_base_file(), None):
                 err = "Unable to parse 'mlox_base.txt', load order NOT sorted!"
                 order_logger.error(err)
