@@ -228,7 +228,7 @@ class MloxGui(QObject):
             self.lo.get_active_plugins()
 
         progress = CustomProgressDialog()
-        self.Msg = self.lo.update(progress, force_parse, cache)
+        self.Msg = self.lo.update(progress, force_parse, False, cache)
 
         for p in self.lo.get_original_order():
             self.Old += p + '\n'
