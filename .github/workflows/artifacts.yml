@@ -21,7 +21,10 @@ jobs:
 
     - name: Build exe
       run: |
-        pyinstaller mlox_linux.spec 
+        pyinstaller mlox_linux.spec
+    - name: Build lint exe
+        run: |
+          pyinstaller mlox_lint.spec
     - uses: actions/upload-artifact@v2
       with:
         name: mlox_linux
