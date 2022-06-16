@@ -5,7 +5,7 @@ import sys
 
 from mlox import version
 from mlox.loadOrder import Loadorder
-from mlox.resources import set_user_path, get_user_path, get_update_file
+from mlox.resources import set_user_path, get_user_path
 from mlox.translations import _
 
 

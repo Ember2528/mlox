@@ -184,7 +184,9 @@ class RuleParser:
     def _parse_error(self, what):
         """print a message about current parsing error, and blow away the
         current parse buffer so next parse starts on next input line."""
-        parse_logger.error("%s: Parse Error(%s), %s [Buffer=%s]" % (self._where(), self.curr_rule, what, self.buffer))
+        msg = "%s: Parse Error(%s), %s [Buffer=%s]" % (self._where(), self.curr_rule, what, self.buffer)
+        parse_logger.error(msg)
+        print(f"[ERROR] {msg}", file=self.out_stream)
         self.buffer = ""
         self.parse_dbg_indent = self.parse_dbg_indent[:-2]
 

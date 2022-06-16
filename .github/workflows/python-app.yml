@@ -73,6 +73,7 @@ jobs:
       with:
         allowUpdates: true
         draft: true
+        generateReleaseNotes: true
         artifacts: "dist/mlox.exe"
         token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -105,5 +106,6 @@ jobs:
       with:
         allowUpdates: true
         draft: true
+        generateReleaseNotes: true
         artifacts: "dist/mlox_macos"
         token: ${{ secrets.GITHUB_TOKEN }}
