@@ -76,8 +76,8 @@ ApplicationWindow {
                 Layout.minimumHeight: 80
                 Layout.minimumWidth: 80
                 Layout.fillWidth: false
-                anchors.right: parent.right
-                anchors.rightMargin: 0
+//                anchors.right: parent.right
+//                anchors.rightMargin: 0
 
                 Image {
                     id: image
@@ -178,21 +178,21 @@ ApplicationWindow {
 
     Connections {
         target: mloxButton
-        onClicked: python.reload()
+        function onClicked() { python.reload() }
     }
 
     Connections {
         target: updateButton
-        onClicked: python.commit()
+        function onClicked() { python.commit() }
     }
 
     Connections {
         target: python
-        onEnable_updateButton: {updateButton.enabled = is_enabled}
-        onSet_status: {statusText.text = text}
-        onSet_message: {messagesText.text = text}
-        onSet_new: {newText.text = text}
-        onSet_old: {currentText.text = text}
+        function onEnable_updateButton(is_enabled) { updateButton.enabled = is_enabled }
+        function onSet_status(text) { statusText.text = text }
+        function onSet_message(text) { messagesText.text = text }
+        function onSet_new(text) { newText.text = text }
+        function onSet_old(text) { currentText.text = text }
     }
 
 }

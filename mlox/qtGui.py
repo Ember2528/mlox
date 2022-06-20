@@ -277,7 +277,7 @@ class MloxGui(QObject):
             self.display()
             return
         self.lo.write_new_order()
-        gui_logger.info("[LOAD ORDER UPDATED!]")
+        gui_logger.info("SUCCESS: LOAD ORDER UPDATED!")
         self.can_update = False
         self.display()
 
