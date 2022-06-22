@@ -26,6 +26,7 @@ class Loadorder:
         self.new_order = []  # the new load order
         self.is_sorted = False
         self.caseless = fileFinder.caseless_filenames()
+        self.conflicts = []  # conflicts in the load order for highlighting
 
         # self.datadir = None                # where plugins live
         # self.plugin_file = None            # Path to the file containing the plugin list
@@ -176,8 +177,11 @@ class Loadorder:
             curr = p.lower()
             if (orig_index[curr] - 1) > i:
                 highlight = "*"
+            if p in self.conflicts:
+                highlight = "*!"
+
             formatted.append("%s%03d%s %s" % (highlight, orig_index[curr], highlight, p))
-            if highlight == "*":
+            if highlight == "*" or highlight == "*!":
                 if i < len(self.new_order) - 1:
                     next_idx = self.new_order[i + 1].lower()
                 if orig_index[curr] > orig_index[next_idx]:
@@ -243,9 +247,9 @@ class Loadorder:
             progress.update_value_and_label(90, "Parsing rules ...")
 
         # Convert the graph into a sorted list of all plugins (rules + load order)
+        self.conflicts = parser.conflicts
         plugin_graph = parser.get_graph()
         print(parser.get_messages(), file=out_stream)
-
 
         self.add_current_order(plugin_graph, out_stream)  # tertiary order "pseudo-rules" from current load order
         sorted_plugins = plugin_graph.topo_sort()
