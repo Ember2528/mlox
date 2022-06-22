@@ -171,25 +171,23 @@ class Loadorder:
         orig_index = {}
         for n in range(1, len(self.order) + 1):
             orig_index[self.order[n - 1]] = n
+
         highlight = "_"
         for i in range(0, len(self.new_order)):
+
             p = self.new_order[i]
             curr = p.lower()
             if (orig_index[curr] - 1) > i:
                 highlight = "*"
-            if p in self.conflicts:
-                highlight = "*!"
 
-            formatted.append("%s%03d%s %s" % (highlight, orig_index[curr], highlight, p))
+            if p in self.conflicts:
+                formatted.append("%s%03d%s %s" % ("*!", orig_index[curr], "*!", p))
+            else:
+                formatted.append("%s%03d%s %s" % (highlight, orig_index[curr], highlight, p))
+
             if highlight == "*":
                 if i < len(self.new_order) - 1:
                     next_idx = self.new_order[i + 1].lower()
-                if orig_index[curr] > orig_index[next_idx]:
-                    highlight = "_"
-            elif highlight == "*!":
-                if i < len(self.new_order) - 1:
-                    next_idx = self.new_order[i + 1].lower()
-                    highlight = "*"
                 if orig_index[curr] > orig_index[next_idx]:
                     highlight = "_"
         return formatted
