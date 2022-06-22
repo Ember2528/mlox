@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "1.1"
+VERSION = "1.1.1"
 
 
 def about():

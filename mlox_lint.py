@@ -37,7 +37,7 @@ def lint():
     logging.info("%s %s", version.full_version(), _["Hello!"])
 
     my_loadorder = Loadorder()
-    log = my_loadorder.update(None, True, True, False)
+    log = my_loadorder.update(None, True)
 
     print(log)
 

@@ -193,9 +193,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--local",
                         help="Tell the app to use a local depot for app resources.\nDefault is ./mlox.",
                         action="store_true")
-    parser.add_argument("--force-parse",
-                        help="Tell the app to always parse the rule files in the depot.\nDefault is False (use cached graph).",
-                        action="store_true")
 
     add_writer_group(parser)
     add_verbosity_group(parser)
@@ -235,9 +232,9 @@ def process_load_order(a_loadorder, args):
         print(log)
         return 0
     if args.quiet:
-        a_loadorder.update(None, args.force_parse, args.warningsonly)
+        a_loadorder.update(None, args.warningsonly)
     else:
-        log = a_loadorder.update(None, args.force_parse, args.warningsonly)
+        log = a_loadorder.update(None, args.warningsonly)
         print(log)
 
     if args.warningsonly:

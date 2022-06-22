@@ -198,7 +198,7 @@ class Loadorder:
         output = plugin_graph.explain(plugin_name, self.order)
         return output
 
-    def update(self, progress=None, force_parse=False, warningsonly=False, cache=True):
+    def update(self, progress=None, warningsonly=False):
         """
         Update the load order based on input rules.
         """
@@ -215,97 +215,37 @@ class Loadorder:
         plugin_graph: Optional[pluggraph] = None
         out_stream = io.StringIO()
 
-        # check if update is needed
-        if not force_parse:
-            # sha the base rules and compare
-            sha: Optional[str] = settings_get_val('sha_base')
-            file_sha = sha256sum(get_base_file())
-            if sha != file_sha:
-                # rules file has changed
-                force_parse = True
-                settings_set_val('sha_base', file_sha)
+        # read rules from various sources, and add orderings to graph
+        # if any subsequent rule causes a cycle in the current graph, it is discarded
+        parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
 
-            # sha the user rules file and compare
-            sha: Optional[str] = settings_get_val('sha')
-            if os.path.exists(get_user_file()):
-                file_sha = sha256sum(get_user_file())
-                if sha != file_sha:
-                    # rules file has changed
-                    force_parse = True
-                    settings_set_val('sha', file_sha)
+        # read my user file
+        if progress is not None:
+            progress.update_value_and_label(1, "Loading my rules file ...")
+        if os.path.exists(get_my_user_file()):
+            parser.read_rules(get_my_user_file(), None)
 
-            # sha the my_rules file and compare
-            sha: Optional[str] = settings_get_val('sha_my')
-            if os.path.exists(get_my_user_file()):
-                file_sha = sha256sum(get_my_user_file())
-                if sha != file_sha:
-                    # rules file has changed
-                    force_parse = True
-                    settings_set_val('sha_my', file_sha)
+        # read user file
+        if progress is not None:
+            progress.update_value_and_label(25, "Loading user file ...")
+        if os.path.exists(get_user_file()):
+            parser.read_rules(get_user_file(), None)
 
-        if not force_parse:
-            # deserialize graph
-            if os.path.exists(get_graph_file()):
-                try:
-                    with open(get_graph_file(), "r") as read_graph:
-                        plugin_graph_map = json.load(read_graph)
-                        plugin_graph = pluggraph()
-                        plugin_graph = plugin_graph.from_map(plugin_graph_map)
-                        order_logger.info(f"SUCCESS: Loaded cached rule graph from: {get_graph_file()}")
-                except JSONDecodeError as e:
-                    order_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
-                    order_logger.debug(f'Exception {str(e)}.')
-            # deserialize messages
-            if os.path.exists(get_parser_msg_file()):
-                try:
-                    with open(get_parser_msg_file(), "r") as read_msg:
-                        print(read_msg.read(), file=out_stream)
-                except JSONDecodeError as e:
-                    order_logger.warning(f'Unable to deserialize messages from {get_parser_msg_file()}.')
-                    order_logger.debug(f'Exception {str(e)}.')
+        # read base file
+        if progress is not None:
+            progress.update_value_and_label(50, "Loading base file ...")
+        if not parser.read_rules(get_base_file(), None):
+            err = "Unable to parse 'mlox_base.txt', load order NOT sorted!"
+            order_logger.error(err)
+            self.new_order = []
+            return f"ERROR {err}"
+        if progress is not None:
+            progress.update_value_and_label(90, "Parsing rules ...")
 
-        order_logger.info(f"Need to parse rules: {plugin_graph is None or force_parse}")
+        # Convert the graph into a sorted list of all plugins (rules + load order)
+        plugin_graph = parser.get_graph()
+        print(parser.get_messages(), file=out_stream)
 
-        if plugin_graph is None or force_parse:
-            # read rules from various sources, and add orderings to graph
-            # if any subsequent rule causes a cycle in the current graph, it is discarded
-            parser = ruleParser.RuleParser(self.order, self.datadir, self.caseless)
-
-            # read my user file
-            if progress is not None:
-                progress.update_value_and_label(1, "Loading my rules file ...")
-            if os.path.exists(get_my_user_file()):
-                parser.read_rules(get_my_user_file(), None)
-
-            # read user file
-            if progress is not None:
-                progress.update_value_and_label(25, "Loading user file ...")
-            if os.path.exists(get_user_file()):
-                parser.read_rules(get_user_file(), None)
-
-            # read base file
-            if progress is not None:
-                progress.update_value_and_label(50, "Loading base file ...")
-            if not parser.read_rules(get_base_file(), None):
-                err = "Unable to parse 'mlox_base.txt', load order NOT sorted!"
-                order_logger.error(err)
-                self.new_order = []
-                return f"ERROR {err}"
-            if progress is not None:
-                progress.update_value_and_label(90, "Parsing rules ...")
-
-            # Convert the graph into a sorted list of all plugins (rules + load order)
-            plugin_graph = parser.get_graph()
-            print(parser.get_messages(), file=out_stream)
-
-            # serialize graph
-            if cache:
-                with open(get_graph_file(), "w") as write:
-                    json.dump(vars(plugin_graph), write, indent=4)
-                order_logger.info(f"Current rule graph has been saved to: {get_graph_file()}")
-                # serialize messages
-                with open(get_parser_msg_file(), "w") as write_msg:
-                    write_msg.write(out_stream.getvalue())
 
         self.add_current_order(plugin_graph, out_stream)  # tertiary order "pseudo-rules" from current load order
         sorted_plugins = plugin_graph.topo_sort()
