@@ -181,9 +181,15 @@ class Loadorder:
                 highlight = "*!"
 
             formatted.append("%s%03d%s %s" % (highlight, orig_index[curr], highlight, p))
-            if highlight == "*" or highlight == "*!":
+            if highlight == "*":
                 if i < len(self.new_order) - 1:
                     next_idx = self.new_order[i + 1].lower()
+                if orig_index[curr] > orig_index[next_idx]:
+                    highlight = "_"
+            elif highlight == "*!":
+                if i < len(self.new_order) - 1:
+                    next_idx = self.new_order[i + 1].lower()
+                    highlight = "*"
                 if orig_index[curr] > orig_index[next_idx]:
                     highlight = "_"
         return formatted
