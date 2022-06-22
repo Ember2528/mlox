@@ -220,7 +220,6 @@ class Loadorder:
             for p in self.get_original_order():
                 order_logger.debug("  " + p)
 
-        plugin_graph: Optional[pluggraph] = None
         out_stream = io.StringIO()
 
         # read rules from various sources, and add orderings to graph

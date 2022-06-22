@@ -6,6 +6,7 @@ import sys
 import tempfile
 import traceback
 from argparse import Namespace
+import urllib.request
 
 from PyQt5.QtCore import QUrl, QObject, pyqtSignal, pyqtSlot, QSize
 from PyQt5.QtGui import QImage, QIcon, QPixmap
@@ -221,7 +222,20 @@ class MloxGui(QObject):
         self.Old = ""
         self.Msg = ""
 
-        gui_logger.info("Version: %s\t\t\t\t %s " % (version.full_version(), "Hello!"))
+        current_version = version.full_version()
+        gui_logger.info("Version: %s\t\t\t\t %s " % (current_version, "Hello!"))
+
+        # check for update
+        url = "https://github.com/rfuzzo/mlox/releases/latest"
+        try:
+            connection = urllib.request.urlopen(url)
+            remote_url: str = connection.url
+            remote_version = remote_url.split('/')[-1]
+            if remote_version != current_version:
+                gui_logger.warning(f"MLOX Update available: {current_version} -> {remote_version}. Link: {remote_url}")
+        except Exception as e:
+            gui_logger.warning('Unable to connect to {0}, skipping update check.'.format(url))
+
         self.lo = Loadorder()
         if fromfile is not None:
             self.lo.read_from_file(fromfile)
