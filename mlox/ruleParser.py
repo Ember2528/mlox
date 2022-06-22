@@ -631,7 +631,11 @@ class RuleParser:
                 print("[CONFLICT]", file=self.out_stream)
                 for e in exprs:
                     print(self._pprint(self._prune_any(e), " > "), file=self.out_stream)
-                    self.conflicts.append(e)
+                    if isinstance(e, list):
+                        for plugin in e:
+                            self.conflicts.append(plugin)
+                    else:
+                        self.conflicts.append(e)
                 if msg != "":
                     print(msg, file=self.out_stream)
         elif rule == "NOTE":  # takes any number of exprs
