@@ -27,9 +27,9 @@ def colorize_text(text):
     This function takes normal text, and applies html style tags where appropriate.
     """
     bg_colors = {
-        "low": "<span style='background-color: rgb(125,220,240);'>\g<0></span>",
+        "low": "<span style='background-color: rgb(255,180,180);'>\g<0></span>",
         "medium": "<span style='background-color: rgb(255,255,180);'>\g<0></span>",
-        "high": "<span style='background-color: rgb(255,180,180);'>\g<0></span>",
+        "high": "<span style='background-color: rgb(125,220,240);'>\g<0></span>",
         "green": "<span style='background-color: rgb(80,200,120);'>\g<0></span>",
         "yellow": "<span style='background-color: yellow;'>\g<0></span>",
         "red": "<span style='background-color: rgb(238,75,43);'>\g<0></span>"

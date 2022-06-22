@@ -148,7 +148,7 @@ class RuleParser:
         self.curr_rule = ""  # name of the current rule we are parsing
         self.parse_dbg_indent = ""
         self.out_stream = io.StringIO()
-        self.conflicts = []  # conflicts in the load order for highlighting
+        self.hints = {"conflicts": [], "patch": [], "requires": []}  # hints in the load order for highlighting
 
     def _readline(self):
         """
@@ -617,6 +617,7 @@ class RuleParser:
         else:
             self.buffer = expr
         msg = "" if self.message == [] else " |" + "\n |".join(self.message)  # no ending LF
+
         if rule == "CONFLICT":  # takes any number of exprs
             exprs = []
             parse_logger.debug("before conflict parse_expr() expr=%s line=%s" % (expr, self.buffer))
@@ -631,13 +632,15 @@ class RuleParser:
                 print("[CONFLICT]", file=self.out_stream)
                 for e in exprs:
                     print(self._pprint(self._prune_any(e), " > "), file=self.out_stream)
+
                     if isinstance(e, list):
                         for plugin in e:
-                            self.conflicts.append(plugin)
+                            self.hints["conflicts"].append(plugin)
                     else:
-                        self.conflicts.append(e)
+                        self.hints["conflicts"].append(e)
                 if msg != "":
                     print(msg, file=self.out_stream)
+
         elif rule == "NOTE":  # takes any number of exprs
             parse_logger.debug("function NOTE: %s" % msg)
             exprs = []
@@ -652,6 +655,7 @@ class RuleParser:
                     print(self._pprint(e, " > "), file=self.out_stream)
                 if msg != "":
                     print(msg, file=self.out_stream)
+
         elif rule == "PATCH":  # takes 2 exprs
             (bool1, expr1) = self._parse_expression()
             if bool1 is None:
@@ -667,14 +671,29 @@ class RuleParser:
                 # case where the patch is present but the thing to be patched is missing
                 print("[PATCH]\n%s is missing some pre-requisites:\n%s\n" % (
                     self._pprint(expr1, " !!"), self._pprint(expr2, " ")), file=self.out_stream)
+
+                if isinstance(expr1, list):
+                    for plugin in expr1:
+                        self.hints["patch"].append(plugin)
+                else:
+                    self.hints["patch"].append(expr1)
+
                 if msg != "":
                     print(msg, file=self.out_stream)
             if bool2 and not bool1:
                 # case where the patch is missing for the thing to be patched
                 print("[PATCH]\n%s for:\n%s\n" % (self._pprint(expr1, " !!"), self._pprint(expr2, " ")),
                       file=self.out_stream)
+
+                if isinstance(expr2, list):
+                    for plugin in expr2:
+                        self.hints["patch"].append(plugin)
+                else:
+                    self.hints["patch"].append(expr2)
+
                 if msg != "":
                     print(msg, file=self.out_stream)
+
         elif rule == "REQUIRES":  # takes 2 exprs
             (bool1, expr1) = self._parse_expression(prune=True)
             if bool1 is None:
@@ -689,6 +708,13 @@ class RuleParser:
             if bool1 and not bool2:
                 expr2_str = self._pprint(expr2, " > ")
                 print("[REQUIRES]\n%s Requires:\n%s\n" % (self._pprint(expr1, " !!!"), expr2_str), file=self.out_stream)
+
+                if isinstance(expr1, list):
+                    for plugin in expr1:
+                        self.hints["requires"].append(plugin)
+                else:
+                    self.hints["requires"].append(expr1)
+
                 if msg != "":
                     print(msg, file=self.out_stream)
                 match = re_filename_version.search(expr2_str)
@@ -696,6 +722,7 @@ class RuleParser:
                     print(
                         " | [Note that you may see this message if you have an older version of one of the pre-requisites. In that case, it is suggested that you upgrade to the newer version].",
                         file=self.out_stream)
+
         self.parse_dbg_indent = self.parse_dbg_indent[:-2]
         parse_logger.debug("parse_statement RETURNING")
 

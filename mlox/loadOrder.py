@@ -26,7 +26,7 @@ class Loadorder:
         self.new_order = []  # the new load order
         self.is_sorted = False
         self.caseless = fileFinder.caseless_filenames()
-        self.conflicts = []  # conflicts in the load order for highlighting
+        self.hints = {}  # hints in the load order for highlighting
 
         # self.datadir = None                # where plugins live
         # self.plugin_file = None            # Path to the file containing the plugin list
@@ -180,8 +180,12 @@ class Loadorder:
             if (orig_index[curr] - 1) > i:
                 highlight = "*"
 
-            if p in self.conflicts:
+            if p in self.hints["conflicts"]:
                 formatted.append("%s%03d%s %s" % ("*!", orig_index[curr], "*!", p))
+            elif p in self.hints["patch"]:
+                formatted.append("%s%03d%s %s" % ("!!", orig_index[curr], "!!", p))
+            elif p in self.hints["requires"]:
+                formatted.append("%s%03d%s %s" % ("!!!", orig_index[curr], "!!!", p))
             else:
                 formatted.append("%s%03d%s %s" % (highlight, orig_index[curr], highlight, p))
 
@@ -250,7 +254,7 @@ class Loadorder:
             progress.update_value_and_label(90, "Parsing rules ...")
 
         # Convert the graph into a sorted list of all plugins (rules + load order)
-        self.conflicts = parser.conflicts
+        self.hints = parser.hints
         plugin_graph = parser.get_graph()
         print(parser.get_messages(), file=out_stream)
 
