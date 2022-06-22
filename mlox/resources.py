@@ -23,7 +23,7 @@ def settings_load():
             with open(get_settings_file(), "r") as fs:
                 settings = json.load(fs)
         except JSONDecodeError as e:
-            res_logger.warning(f'Unable to deserialize graph from {get_graph_file()}.')
+            res_logger.warning(f'Unable to deserialize graph from {get_settings_file()}.')
             res_logger.debug(f'Exception {str(e)}.')
 
 
@@ -72,14 +72,6 @@ def get_user_file() -> str:
 
 def get_my_user_file() -> str:
     return os.path.join(depot_path, UPDATE_MY_USER)
-
-
-def get_graph_file() -> str:
-    return os.path.join(depot_path, "mlox_graph.json")
-
-
-def get_parser_msg_file() -> str:
-    return os.path.join(depot_path, "mlox_parser_msg.txt")
 
 
 def settings_save():

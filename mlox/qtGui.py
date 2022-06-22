@@ -222,7 +222,7 @@ class MloxGui(QObject):
         self.Old = ""
         self.Msg = ""
 
-        current_version = version.full_version()
+        current_version = version.VERSION
         gui_logger.info("Version: %s\t\t\t\t %s " % (current_version, "Hello!"))
 
         # check for update

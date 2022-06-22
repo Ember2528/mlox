@@ -1,15 +1,9 @@
-import json
 import logging
 import os
 import io
-from json import JSONDecodeError
-from typing import Optional
 
 from mlox import configHandler, ruleParser, fileFinder
-from mlox.pluggraph import pluggraph
-from mlox.resources import get_base_file, get_user_file, get_graph_file, get_parser_msg_file, \
-    settings_set_val, settings_get_val, get_my_user_file
-from mlox.utils import sha256sum
+from mlox.resources import get_base_file, get_user_file, get_my_user_file
 
 old_loadorder_output = "current_loadorder.out"
 new_loadorder_output = "mlox_new_loadorder.out"
