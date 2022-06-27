@@ -631,12 +631,13 @@ class RuleParser:
             if len(exprs) > 1:
                 print("[CONFLICT]", file=self.out_stream)
                 for e in exprs:
-                    print(self._pprint(self._prune_any(e), " > "), file=self.out_stream)
-
                     if isinstance(e, list):
                         for plugin in e:
-                            self.hints["conflicts"].append(plugin)
+                            if 'MISSING' not in plugin:
+                                print(self._pprint(self._prune_any(plugin), " > "), file=self.out_stream)
+                                self.hints["conflicts"].append(plugin)
                     else:
+                        print(self._pprint(self._prune_any(e), " > "), file=self.out_stream)
                         self.hints["conflicts"].append(e)
                 if msg != "":
                     print(msg, file=self.out_stream)
@@ -682,8 +683,7 @@ class RuleParser:
                     print(msg, file=self.out_stream)
             if bool2 and not bool1:
                 # case where the patch is missing for the thing to be patched
-                print("[PATCH]\n%s for:\n%s\n" % (self._pprint(expr1, " !!"), self._pprint(expr2, " ")),
-                      file=self.out_stream)
+                print("[PATCH]\n%s for:\n%s\n" % (self._pprint(expr1, " !!"), self._pprint(expr2, " ")), file=self.out_stream)
 
                 if isinstance(expr2, list):
                     for plugin in expr2:
