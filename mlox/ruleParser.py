@@ -249,13 +249,20 @@ class RuleParser:
             self.buffer = buff[pos:].lstrip()
             matches = self._expand_filename(plugin_name)
             if matches:
-                plugin_name = matches.pop(0)
-                parse_logger.debug("parse_plugin_name new name=%s" % plugin_name)
-                if len(matches) > 0:
-                    self.buffer = " ".join(matches) + " " + self.buffer
-                return True, plugin_name
+                
+                if len(matches) > 1:
+                    parse_logger.debug("parse_plugin_name new name=%s" % plugin_name)
+
+                # plugin_name = matches.pop(0)
+                # parse_logger.debug("parse_plugin_name new name=%s" % plugin_name)
+                # if len(matches) > 0:
+                #     self.buffer = " ".join(matches) + " " + self.buffer
+                # return True, plugin_name
+                return True, matches
+                    
+
             self.parse_dbg_indent = self.parse_dbg_indent[:-2]
-            return False, plugin_name
+            return False, [plugin_name]
         else:
             self._parse_error("expected a plugin name")
             self.parse_dbg_indent = self.parse_dbg_indent[:-2]
@@ -269,20 +276,23 @@ class RuleParser:
             if re_rule.match(self.buffer):
                 self.parse_dbg_indent = self.parse_dbg_indent[:-2]
                 return
-            p = self._parse_plugin_name()[1]
-            if p is None:
-                continue
-            n_order += 1
-            if rule == "ORDER":
-                if prev is not None:
-                    self.graph.add_edge(self._where(), prev, p, self.out_stream)
-                prev = p
-            elif rule == "NEARSTART":
-                self.graph.nearstart.append(p)
-                self.graph.nodes.setdefault(p, [])
-            elif rule == "NEAREND":
-                self.graph.nearend.append(p)
-                self.graph.nodes.setdefault(p, [])
+            
+            res = self._parse_plugin_name()
+            
+            for pnam in res[1]: # matches
+                if pnam is None:
+                    continue
+                n_order += 1
+                if rule == "ORDER":
+                    if prev is not None:
+                        self.graph.add_edge(self._where(), prev, pnam, self.out_stream)
+                    prev = pnam
+                elif rule == "NEARSTART":
+                    self.graph.nearstart.append(pnam)
+                    self.graph.nodes.setdefault(pnam, [])
+                elif rule == "NEAREND":
+                    self.graph.nearend.append(pnam)
+                    self.graph.nodes.setdefault(pnam, [])
         if rule == "ORDER":
             if n_order == 0:
                 parse_logger.warning("%s: ORDER rule has no entries" % (self._where()))
@@ -573,6 +583,15 @@ class RuleParser:
             parse_logger.debug("parse_expression parsing plugin: \"%s\"" % self.buffer)
             (exists, p) = self._parse_plugin_name()
             if exists is not None and p is not None:
+
+                if len(p) > 1:
+                    p = p[0]
+                elif len(p) > 0:
+                    p = p[0]
+
+                #for pnam in p:
+                #p = p.pop()
+
                 p = self.name_converter.truename(p) if exists else ("MISSING(%s)" % self.name_converter.truename(p))
             self.parse_dbg_indent = self.parse_dbg_indent[:-2]
             return exists, p
