@@ -57,17 +57,20 @@ class pluggraph:
             # this case because they do not matter.
             # (where != "") when it is an edge from a rules file, and in
             # that case we do want to see cycle errors.
-            cycle_detected = "%s: Cycle detected, not adding: \"%s\" -> \"%s\"" % (where, plug1, plug2)
-
-            cycle_detected += f"\nStack:\n"
-            cycle_detected += f">   {plug2}\n"
-            for node in stack:
-                cycle_detected += f">   {node}\n"
-            cycle_detected += f">   {plug1}\n"
+            cycle_detected = ""
 
             if where == "":
                 pluggraph_logger.debug(cycle_detected)
             else:
+
+                cycle_detected = "%s: Cycle detected, not adding: \"%s\" -> \"%s\"" % (where, plug1, plug2)
+
+                cycle_detected += f"\nStack:\n"
+                cycle_detected += f">   {plug2}\n"
+                for node in stack:
+                    cycle_detected += f">   {node}\n"
+                cycle_detected += f">   {plug1}\n"
+
                 pluggraph_logger.warning(cycle_detected)
                 if out_stream is not None:
                     print(f"WARNING {cycle_detected}", file=out_stream)
