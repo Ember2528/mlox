@@ -52,16 +52,18 @@ class pluggraph:
         # detected a cycle, which we disallow.
         can_reach, stack = self.can_reach(plug2, plug1)
         if can_reach:
-            # (where == "") when adding edges from psuedo-rules we
+            # (where == "") when adding edges from pseudo-rules we
             # create from our current plugin list, We ignore cycles in
             # this case because they do not matter.
             # (where != "") when it is an edge from a rules file, and in
             # that case we do want to see cycle errors.
             cycle_detected = "%s: Cycle detected, not adding: \"%s\" -> \"%s\"" % (where, plug1, plug2)
 
-            # cycle_detected += f"\nStack:\n"
-            # for node in stack:
-            #     cycle_detected += f">   {node}\n"
+            cycle_detected += f"\nStack:\n"
+            cycle_detected += f">   {plug2}\n"
+            for node in stack:
+                cycle_detected += f">   {node}\n"
+            cycle_detected += f">   {plug1}\n"
 
             if where == "":
                 pluggraph_logger.debug(cycle_detected)
