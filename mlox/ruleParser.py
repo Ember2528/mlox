@@ -270,29 +270,39 @@ class RuleParser:
 
     def _parse_ordering(self, rule):
         self.parse_dbg_indent += "  "
-        prev = None
+        prev = []
         n_order = 0
+        
+        # read all lines in the rule
         while self._readline():
+            
             if re_rule.match(self.buffer):
                 self.parse_dbg_indent = self.parse_dbg_indent[:-2]
                 return
             
-            res = self._parse_plugin_name()
+            matches = self._parse_plugin_name()[1]
             
-            for pnam in res[1]: # matches
+            # go through all matches of the current line
+            for pnam in matches:
                 if pnam is None:
                     continue
                 n_order += 1
+                
                 if rule == "ORDER":
-                    if prev is not None:
-                        self.graph.add_edge(self._where(), prev, pnam, self.out_stream)
-                    prev = pnam
+                    if len(prev) > 0:
+                        for _prev in prev:
+                            self.graph.add_edge(self._where(), _prev, pnam, self.out_stream)
+                
                 elif rule == "NEARSTART":
                     self.graph.nearstart.append(pnam)
                     self.graph.nodes.setdefault(pnam, [])
+                
                 elif rule == "NEAREND":
                     self.graph.nearend.append(pnam)
                     self.graph.nodes.setdefault(pnam, [])
+
+            prev = matches
+
         if rule == "ORDER":
             if n_order == 0:
                 parse_logger.warning("%s: ORDER rule has no entries" % (self._where()))
