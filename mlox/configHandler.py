@@ -23,7 +23,7 @@ def caseless_uniq(un_uniqed_files):
         else:
             unique_files.append(aFile)
             lower_files.append(aFile.lower())
-    return (unique_files, filtered)
+    return unique_files, filtered
 
 
 def partition_esps_and_esms(filelist):
@@ -36,7 +36,26 @@ def partition_esps_and_esms(filelist):
             esp_files.append(filename)
         elif ext == ".esm":
             esm_files.append(filename)
-    return (esm_files, esp_files)
+    return esm_files, esp_files
+
+def partition_omwfiles(filelist):
+    """Split filelist into separate lists for esms and esps and openmwaddons, retaining order."""
+    esm_files = []
+    esp_files = []
+    omwaddon_files = []
+    omwscript_files = []
+    for filename in filelist:
+        name, ext = os.path.splitext(filename)
+        if ext == ".esp":
+            esp_files.append(filename)
+        elif ext == ".esm":
+            esm_files.append(filename)
+        elif ext == ".omwaddon":
+            omwaddon_files.append(filename)
+        elif ext == ".omwscript":
+            omwscript_files.append(filename)
+
+    return esm_files, esp_files, omwaddon_files, omwscript_files
 
 
 class configHandler():
@@ -56,13 +75,16 @@ class configHandler():
     # this may be too sloppy, we could also look for the same prefix pattern,
     # and remove that if present on all lines.
     re_sloppy_plugin = re.compile(
-        r'^(?:(?:DBG:\s+)?[_\*]\d\d\d[_\*]\s+|GameFile\d+=|content=|\d{1,3} {1,2}|Plugin\d+\s*=\s*)?(.+\.es[mp]\b)',
+        r'^(?:(?:DBG:\s+)?[_\*]\d\d\d[_\*]\s+|GameFile\d+=|content=|\d{1,3} {1,2}|Plugin\d+\s*=\s*)?(.+\.(?:es[mp]|omwaddon|omwscripts)\b)',
         re.IGNORECASE)
+    # pattern to match plugins in openmw.cfg
+    re_openmw_plugin = re.compile(r'(?:content=)(.*)', re.IGNORECASE)
     # pattern used to match a string that should only contain a plugin name, no slop
-    re_plugin = re.compile(r'^(\S.*?\.es[mp]\b)([\s]*)', re.IGNORECASE)
+    re_plugin = re.compile(r'^(\S.*?\.(?:es[mp]|omwaddon|omwscripts)\b)([\s]*)', re.IGNORECASE)
     # The regular expressions used to parse the file
     read_regexes = {
         "Morrowind": re_gamefile,
+        "OpenMw": re_openmw_plugin,
         "Oblivion": re_plugin,
         "raw": re_plugin,
         None: re_sloppy_plugin
@@ -128,6 +150,9 @@ class configHandler():
 
         if self.fileType == "Morrowind":
             return self._write_morrowind(list_of_plugins)
+
+        if self.fileType == "OpenMw":
+            return self._write_openmw(list_of_plugins)
 
         if self.fileType == "raw":
             return self._write_raw(list_of_plugins)
@@ -198,6 +223,45 @@ class configHandler():
 
         return True
 
+    def _write_openmw(self, list_of_plugins):
+        """
+        Write a list of plugins to an openMW cfg file
+
+        :return: True on success, or False on failure
+        """
+
+        # Generate the plugins string
+        out_str = ""
+        for i in range(0, len(list_of_plugins)):
+            out_str += "content={plugin}\n".format(plugin=list_of_plugins[i])
+
+        # Open and read a configuration file, splitting the result into multiple sections.
+        try:
+            file_handle = open(self.configFile, 'r')
+        except IOError:
+            config_logger.error("Unable to open configuration file: {0}".format(self.configFile))
+            return False
+        file_buffer = file_handle.readlines()
+        file_handle.close()
+
+        # Replace all lines starting with "content=" with the generated plugins string
+        old_list = [item for item in file_buffer if not item.startswith("content=") ]
+        old_str = ""
+        for i in range(0, len(old_list)):
+            old_str += "{line}".format(line=old_list[i])
+
+        # Write the modified buffer to the configuration file
+        try:
+            file_handle = open(self.configFile, 'w')
+        except IOError:
+            config_logger.error("Unable to open configuration file: {0}".format(self.configFile))
+            return False
+        file_handle.write(old_str)
+        file_handle.write(out_str)
+        file_handle.close()
+
+        return True
+
 
 class dataDirHandler:
     """
@@ -209,8 +273,9 @@ class dataDirHandler:
     """
     path = None
 
-    def __init__(self, data_files_path):
+    def __init__(self, data_files_path, game_type=None):
         self.path = data_files_path
+        self.game_type = game_type
 
     # Get the directory name in a printable form
     def getDir(self):
@@ -238,10 +303,21 @@ class dataDirHandler:
         # Deal with duplicates
         for f in dups:
             logging.warning("Duplicate plugin found in data directory: {0}".format(f))
+
+        # special handling for OpenMW
+        if self.game_type == "OpenMw":
+            (esm_files, esp_files, omwaddon_files, omwscript_files) = partition_omwfiles(files)
+            files = self._sort_by_date(esm_files)
+            files += self._sort_by_date(esp_files)
+            files += self._sort_by_date(omwaddon_files)
+            files += self._sort_by_date(omwscript_files)
+            return files
+
         # sort the plugins into load order by modification date (esm's first)
         (esm_files, esp_files) = partition_esps_and_esms(files)
         files = self._sort_by_date(esm_files)
         files += self._sort_by_date(esp_files)
+
         return files
 
     def write(self, list_of_plugins):

@@ -15,6 +15,8 @@ import os
 import re
 from typing import Optional
 
+import userpaths
+
 file_logger = logging.getLogger('mlox.fileFinder')
 
 
@@ -138,13 +140,16 @@ def _find_appdata():
 
 def _get_Oblivion_plugins_file():
     appdata = _find_appdata()
-    if appdata == None:
-        file_logger.warn("Application data directory not found")
-        return (None)
+    if appdata is None:
+        file_logger.warning("Application data directory not found")
+        return None
     return os.path.join(appdata, "Oblivion", "Plugins.txt")
 
 
-def find_game_dirs():
+def _find_openmw_dir():
+    return caseless_dirlist( os.path.join(userpaths.get_my_documents(), "my games", "OpenMW" ))
+
+def find_game_dirs(openmw = False):
     """
     Attempt to find the plugin file and directory for Morrowind and Oblivion
     This will attempt to find Morrowind's files first
@@ -155,13 +160,19 @@ def find_game_dirs():
 
     cwd = caseless_dirlist()  # start our search in our current directory
     gamedir = cwd.find_parent_dir("Morrowind.ini")
-    if gamedir != None:
-        game = "Morrowind"
-        list_file = gamedir.find_path("Morrowind.ini")
-        datadir = gamedir.find_path("Data Files")
+    if gamedir is not None:
+
+        if openmw:
+            game = "OpenMw"
+            list_file = _find_openmw_dir().find_path("openmw.cfg")
+            datadir = gamedir.find_path("Data Files")
+        else:
+            game = "Morrowind"
+            list_file = gamedir.find_path("Morrowind.ini")
+            datadir = gamedir.find_path("Data Files")
     else:
         gamedir = cwd.find_parent_dir("Oblivion.ini")
-        if gamedir != None:
+        if gamedir is not None:
             game = "Oblivion"
             list_file = _get_Oblivion_plugins_file()
             datadir = gamedir.find_path("Data")
@@ -169,7 +180,8 @@ def find_game_dirs():
             # Not running under a game directory, so we're probably testing
             # assume plugins live in current directory.
             datadir = os.path.abspath("..")
+
     file_logger.debug("Found Game:  {0}".format(game))
     file_logger.debug("Plugins file at:  {0}".format(list_file))
     file_logger.debug("Data Files at: {0}".format(datadir))
-    return (game, list_file, datadir)
+    return game, list_file, datadir

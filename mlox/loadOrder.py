@@ -14,7 +14,7 @@ order_logger = logging.getLogger('mlox.loadOrder')
 class Loadorder:
     """Class for reading plugin mod times (load order), and updating them based on rules"""
 
-    def __init__(self):
+    def __init__(self, openmw = False):
         # order is the list of plugins in Data Files, ordered by mtime
         self.order = []  # the load order
         self.new_order = []  # the new load order
@@ -25,7 +25,7 @@ class Loadorder:
         # self.datadir = None                # where plugins live
         # self.plugin_file = None            # Path to the file containing the plugin list
         # self.game_type = None              # 'Morrowind', 'Oblivion', or None for unknown
-        self.game_type, self.plugin_file, self.datadir = fileFinder.find_game_dirs()
+        self.game_type, self.plugin_file, self.datadir = fileFinder.find_game_dirs(openmw)
 
     def get_active_plugins(self):
         """
@@ -42,7 +42,15 @@ class Loadorder:
 
         # Get all the plugins
         config_files = configHandler.configHandler(self.plugin_file, self.game_type).read()
-        dir_files = configHandler.dataDirHandler(self.datadir).read()
+        dir_files = configHandler.dataDirHandler(self.datadir, self.game_type).read()
+
+        # hack for openmw
+        if self.game_type == "OpenMw":
+            omwaddons = [f for f in dir_files if os.path.splitext(f)[1] == ".omwaddon"]
+            config_files.extend(omwaddons)
+            omwscripts = [f for f in dir_files if os.path.splitext(f)[1] == ".omwscript"]
+            config_files.extend(omwscripts)
+
 
         # Remove plugins not in the data directory (and correct capitalization)
         config_files = list(map(str.lower, config_files))
@@ -52,6 +60,7 @@ class Loadorder:
         self.order = list(map(self.caseless.cname, self.order))
 
         order_logger.info("Found {0} plugins in: \"{1}\"".format(len(self.order), self.plugin_file))
+
         if not self.order:
             order_logger.warning("No active plugins, defaulting to all plugins in Data Files directory.")
             self.get_data_files()
@@ -63,7 +72,7 @@ class Loadorder:
         Updates self.order
         """
         self.is_sorted = False
-        self.order = configHandler.dataDirHandler(self.datadir).read()
+        self.order = configHandler.dataDirHandler(self.datadir, self.game_type).read()
 
         # Convert the files to lowercase, while storing them in a dict
         self.order = list(map(self.caseless.cname, self.order))
@@ -261,8 +270,12 @@ class Loadorder:
         # The "sorted" list will be a superset of all known plugin files,
         # but we only care about active plugins.
         sorted_datafiles = [f for f in sorted_plugins if f in self.order]
-        (esm_files, esp_files) = configHandler.partition_esps_and_esms(sorted_datafiles)
-        new_order_cname = esm_files + esp_files
+        if self.game_type == "OpenMw":
+            (esm_files, esp_files, omwaddon_files, omwscript_files) = configHandler.partition_omwfiles(sorted_datafiles)
+            new_order_cname = esm_files + esp_files + omwaddon_files + omwscript_files
+        else:
+            (esm_files, esp_files) = configHandler.partition_esps_and_esms(sorted_datafiles)
+            new_order_cname = esm_files + esp_files
         self.new_order = list(map(self.caseless.truename, new_order_cname))
 
         order_logger.debug("New load order:")
@@ -294,7 +307,7 @@ class Loadorder:
             order_logger.error("Not saving blank load order.")
             return False
         if self.datadir:
-            if configHandler.dataDirHandler(self.datadir).write(self.new_order):
+            if configHandler.dataDirHandler(self.datadir, self.game_type).write(self.new_order):
                 self.is_sorted = True
         if isinstance(self.plugin_file, str):
             if configHandler.configHandler(self.plugin_file, self.game_type).write(self.new_order):

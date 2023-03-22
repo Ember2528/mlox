@@ -50,8 +50,8 @@ def colorize_text(text):
         (re.compile(r'^(WARNING:.*)', re.MULTILINE), bg_colors["yellow"]),
         (re.compile(r'^(ERROR:.*)', re.MULTILINE), bg_colors["red"]),
         (re.compile(r'(\[Plugins already in sorted order. No sorting needed!])', re.IGNORECASE), bg_colors["green"]),
-        (re.compile(r'^(\*\d+\*\s.*\.(?i)es[mp])', re.MULTILINE), bg_colors["yellow"]),  # Changed mod order
-        (re.compile(r'^(\*!\d+\*!\s.*\.(?i)es[mp])', re.MULTILINE), bg_colors["red"])  # Changed mod order
+        (re.compile(r'^(\*\d+\*\s.*\.(?i)(?:es[mp]|omwaddon|omwscripts))', re.MULTILINE), bg_colors["yellow"]),  # Changed mod order
+        (re.compile(r'^(\*!\d+\*!\s.*\.(?i)(?:es[mp]|omwaddon|omwscripts))', re.MULTILINE), bg_colors["red"])  # Changed mod order
     ]
     for (regex, replacement_string) in highlighters:
         text = regex.sub(replacement_string, text)
@@ -196,7 +196,7 @@ class MloxGui(QObject):
         self.debug_window = ScrollableDialog()
         self.clipboard = my_app.clipboard()
 
-        self.analyze_loadorder()
+        self.analyze_loadorder(None, args.openmw)
 
         sys.exit(my_app.exec())
 
@@ -209,7 +209,7 @@ class MloxGui(QObject):
         self.set_new.emit(colorize_text(self.New))
         self.set_old.emit(colorize_text(self.Old))
 
-    def analyze_loadorder(self, fromfile=None):
+    def analyze_loadorder(self, fromfile=None, openmw = False):
         """
         This is where the magic happens
         If fromfile is None, then it operates out of the current directory.
@@ -236,7 +236,7 @@ class MloxGui(QObject):
         except Exception as e:
             gui_logger.warning('Unable to connect to {0}, skipping update check.'.format(url))
 
-        self.lo = Loadorder()
+        self.lo = Loadorder(openmw)
         if fromfile is not None:
             self.lo.read_from_file(fromfile)
         else:
