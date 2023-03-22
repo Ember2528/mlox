@@ -52,7 +52,7 @@ def partition_omwfiles(filelist):
             esm_files.append(filename)
         elif ext == ".omwaddon":
             omwaddon_files.append(filename)
-        elif ext == ".omwscript":
+        elif ext == ".omwscripts":
             omwscript_files.append(filename)
 
     return esm_files, esp_files, omwaddon_files, omwscript_files
