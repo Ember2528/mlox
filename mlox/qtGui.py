@@ -196,7 +196,7 @@ class MloxGui(QObject):
         self.debug_window = ScrollableDialog()
         self.clipboard = my_app.clipboard()
 
-        self.analyze_loadorder(None, args.openmw)
+        self.analyze_loadorder(None, args.openmw, args.vfs)
 
         sys.exit(my_app.exec())
 
@@ -209,7 +209,7 @@ class MloxGui(QObject):
         self.set_new.emit(colorize_text(self.New))
         self.set_old.emit(colorize_text(self.Old))
 
-    def analyze_loadorder(self, fromfile=None, openmw = False):
+    def analyze_loadorder(self, fromfile=None, openmw = False, usevfs = False):
         """
         This is where the magic happens
         If fromfile is None, then it operates out of the current directory.
@@ -236,11 +236,11 @@ class MloxGui(QObject):
         except Exception as e:
             gui_logger.warning('Unable to connect to {0}, skipping update check.'.format(url))
 
-        self.lo = Loadorder(openmw)
+        self.lo = Loadorder(openmw, usevfs)
         if fromfile is not None:
             self.lo.read_from_file(fromfile)
         else:
-            self.lo.get_active_plugins()
+            self.lo.get_active_plugins(usevfs)
 
         progress = CustomProgressDialog()
         self.Msg = self.lo.update(progress, False)

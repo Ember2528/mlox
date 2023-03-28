@@ -149,7 +149,7 @@ def _get_Oblivion_plugins_file():
 def _find_openmw_dir():
     return caseless_dirlist( os.path.join(userpaths.get_my_documents(), "my games", "OpenMW" ))
 
-def find_game_dirs(openmw = False):
+def find_game_dirs(openmw = False, vfs = False):
     """
     Attempt to find the plugin file and directory for Morrowind and Oblivion
     This will attempt to find Morrowind's files first
@@ -161,11 +161,13 @@ def find_game_dirs(openmw = False):
     cwd = caseless_dirlist()  # start our search in our current directory
     gamedir = cwd.find_parent_dir("Morrowind.ini")
     if gamedir is not None:
-
-        if openmw:
+        if openmw or vfs:
             game = "OpenMw"
             list_file = _find_openmw_dir().find_path("openmw.cfg")
-            datadir = gamedir.find_path("Data Files")
+            if vfs:
+                datadir = None
+            else:
+                datadir = gamedir.find_path("Data Files")
         else:
             game = "Morrowind"
             list_file = gamedir.find_path("Morrowind.ini")

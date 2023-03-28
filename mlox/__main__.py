@@ -196,6 +196,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--openmw",
                         help="Use OpenMW support.\nDefault is false.",
                         action="store_true")
+    parser.add_argument("--vfs",
+                        help="Use the OpenMW Virtual File System to get plugins, otherwise use plugins inside Data Files.\nDefault is false.",
+                        action="store_true")
 
     add_writer_group(parser)
     add_verbosity_group(parser)
@@ -213,12 +216,12 @@ def command_line_mode(args):
             my_loadorder.read_from_file(fromfile)
             process_load_order(my_loadorder, args)
         return
-    my_loadorder = Loadorder()
+    my_loadorder = Loadorder(args.openmw, args.vfs)
     if not args.warningsonly:
         if args.all:
             my_loadorder.get_data_files()
         else:
-            my_loadorder.get_active_plugins()
+            my_loadorder.get_active_plugins(args.vfs)
     error_code = process_load_order(my_loadorder, args)
     return error_code
 

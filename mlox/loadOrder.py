@@ -14,7 +14,7 @@ order_logger = logging.getLogger('mlox.loadOrder')
 class Loadorder:
     """Class for reading plugin mod times (load order), and updating them based on rules"""
 
-    def __init__(self, openmw = False):
+    def __init__(self, openmw = False, vfs = False):
         # order is the list of plugins in Data Files, ordered by mtime
         self.order = []  # the load order
         self.new_order = []  # the new load order
@@ -25,9 +25,9 @@ class Loadorder:
         # self.datadir = None                # where plugins live
         # self.plugin_file = None            # Path to the file containing the plugin list
         # self.game_type = None              # 'Morrowind', 'Oblivion', or None for unknown
-        self.game_type, self.plugin_file, self.datadir = fileFinder.find_game_dirs(openmw)
+        self.game_type, self.plugin_file, self.datadir = fileFinder.find_game_dirs(openmw, vfs)
 
-    def get_active_plugins(self):
+    def get_active_plugins(self, usevfs = False):
         """
         Get the active list of plugins from the game configuration.
 
@@ -40,18 +40,14 @@ class Loadorder:
                 "No game configuration file was found!\nAre you sure you're running mlox in or under your game directory?")
             return
 
-        # Get all the plugins
+        # Get all the plugin names from config
         config_files = configHandler.configHandler(self.plugin_file, self.game_type).read()
-        dir_files = configHandler.dataDirHandler(self.datadir, self.game_type).read()
 
-        # hack for openmw: add omwaddon files to config list
-        # if self.game_type == "OpenMw":
-        #     for f in dir_files:
-        #         if os.path.splitext(f)[1] == ".omwaddon" and not f in config_files:
-        #             config_files.append(f)
-        #         if os.path.splitext(f)[1] == ".omwscripts" and not f in config_files:
-        #             config_files.append(f)
-
+        # Get physical plugin files
+        if  self.game_type == "OpenMw" and usevfs:
+            dir_files = configHandler.configHandler(self.plugin_file, self.game_type).read_data()
+        else:
+            dir_files = configHandler.dataDirHandler(self.datadir, self.game_type).read()
 
         # Remove plugins not in the data directory (and correct capitalization)
         config_files = list(map(str.lower, config_files))

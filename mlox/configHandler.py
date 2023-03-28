@@ -46,6 +46,7 @@ def partition_omwfiles(filelist):
     omwscript_files = []
     for filename in filelist:
         name, ext = os.path.splitext(filename)
+        ext = ext.lower()
         if ext == ".esp":
             esp_files.append(filename)
         elif ext == ".esm":
@@ -81,6 +82,11 @@ class configHandler():
     re_openmw_plugin = re.compile(r'(?:content=)(.*)', re.IGNORECASE)
     # pattern used to match a string that should only contain a plugin name, no slop
     re_plugin = re.compile(r'^(\S.*?\.(?:es[mp]|omwaddon|omwscripts)\b)([\s]*)', re.IGNORECASE)
+
+    # pattern to match data lines in openmw.cfg
+    re_openmw_data = re.compile(r'(?:data=")(.*)"', re.IGNORECASE)
+    re_openmw_groundcover = re.compile(r'(?:groundcover=)(.*)', re.IGNORECASE)
+
     # The regular expressions used to parse the file
     read_regexes = {
         "Morrowind": re_gamefile,
@@ -88,6 +94,14 @@ class configHandler():
         "Oblivion": re_plugin,
         "raw": re_plugin,
         None: re_sloppy_plugin
+    }
+    # The regular expressions used to parse the file for content lines
+    read_regexes_data = {
+        "Morrowind": re_openmw_data,
+        "OpenMw": re_openmw_data,
+        "Oblivion": re_openmw_data,
+        "raw": re_openmw_data,
+        None: re_openmw_data
     }
     # The path to the configuration file
     configFile = None
@@ -102,6 +116,20 @@ class configHandler():
             self.fileType = fileType
         except:
             config_logger.warning("\"{0}\" is not a recognized file type!".format(fileType))
+
+    @staticmethod
+    def _sort_by_date(dir_path, list_of_plugins):
+        """Sort a list of plugin files by modification date"""
+        dated_plugins = [(os.path.getmtime(os.path.join(dir_path, a_plugin)), a_plugin) for a_plugin in list_of_plugins]
+        dated_plugins.sort()
+        return [x[1] for x in dated_plugins]
+
+    @staticmethod
+    def _sort_by_date_fullpath(list_of_plugins):
+        """Sort a list of plugin files by modification date"""
+        dated_plugins = [(os.path.getmtime(a_plugin), a_plugin) for a_plugin in list_of_plugins]
+        dated_plugins.sort()
+        return [x[1] for x in dated_plugins]
 
     def read(self):
         """
@@ -129,6 +157,82 @@ class configHandler():
         (files, dups) = caseless_uniq(files)
         for f in dups:
             config_logger.debug("Duplicate plugin found in config file: {0}".format(f))
+        return files
+
+    def read_data(self):
+        """
+        Read a configuration file
+
+        :return: An ordered list of content paths from the openmw.cfg
+        """
+        paths = []
+        groundcovers = []
+
+        regex = self.read_regexes_data[self.fileType]
+        groundcover_regex = self.re_openmw_groundcover
+        try:
+            file_handle = open(self.configFile, 'r')
+            for line in file_handle:
+                datapath = regex.match(line.strip())
+                if datapath:
+                    f = datapath.group(1).strip()
+                    paths.append(f)
+
+                groundcover = groundcover_regex.match(line.strip())
+                if groundcover:
+                    f = groundcover.group(1).strip()
+                    groundcovers.append(f.lower())
+
+            file_handle.close()
+        except IOError:
+            config_logger.error("Unable to open configuration file: {0}".format(self.configFile))
+            return []
+        except UnicodeDecodeError:
+            config_logger.error("Bad Characters in configuration file: {0}".format(self.configFile))
+            return []
+        # Deal with duplicates
+        (paths, dups) = caseless_uniq(paths)
+        for f in dups:
+            config_logger.debug("Duplicate plugin found in config file: {0}".format(f))
+
+        # actually get the files
+        data_files_temp = []
+        # loop through all data paths and get the plugins
+        for datapath in paths:
+            # check if directory still exists
+            if not os.path.isdir(datapath):
+                logging.warning("Data folder in cnfig does not exist anymore: {0}".format(datapath))
+                continue
+
+            # get plugins in directory
+            files = [f for f in os.listdir(datapath) if os.path.isfile(os.path.join(datapath, f)) and f.lower() not in groundcovers ]
+            (files, dups) = caseless_uniq(files)
+            # Deal with duplicates
+            for f in dups:
+                logging.warning("Duplicate plugin found in data directory: {0}".format(f))
+
+            (esm_files, esp_files, omwaddon_files, omwscript_files) = partition_omwfiles(files)
+
+            files = []
+            files.extend(esm_files)
+            files.extend(esp_files)
+            files.extend(omwaddon_files)
+            files.extend(omwscript_files)
+
+            # add full paths
+            for f in files:
+                data_files_temp.append(os.path.join(datapath, f))
+
+        # todo sort esms first
+        files = []
+        for f in self._sort_by_date_fullpath(data_files_temp):
+            files.append(os.path.basename(f))
+
+        (files, dups) = caseless_uniq(files)
+        # Deal with duplicates
+        for f in dups:
+            logging.warning("Duplicate plugin found in data directory: {0}".format(f))
+
         return files
 
     def clear(self):
