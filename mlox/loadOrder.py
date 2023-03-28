@@ -44,13 +44,13 @@ class Loadorder:
         config_files = configHandler.configHandler(self.plugin_file, self.game_type).read()
         dir_files = configHandler.dataDirHandler(self.datadir, self.game_type).read()
 
-        # hack for openmw
-        if self.game_type == "OpenMw":
-            for f in dir_files:
-                if os.path.splitext(f)[1] == ".omwaddon" and not f in config_files:
-                    config_files.append(f)
-                if os.path.splitext(f)[1] == ".omwscripts" and not f in config_files:
-                    config_files.append(f)
+        # hack for openmw: add omwaddon files to config list
+        # if self.game_type == "OpenMw":
+        #     for f in dir_files:
+        #         if os.path.splitext(f)[1] == ".omwaddon" and not f in config_files:
+        #             config_files.append(f)
+        #         if os.path.splitext(f)[1] == ".omwscripts" and not f in config_files:
+        #             config_files.append(f)
 
 
         # Remove plugins not in the data directory (and correct capitalization)
