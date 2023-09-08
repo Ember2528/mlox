@@ -133,10 +133,10 @@ class RuleParser:
 
     def __init__(self, plugin_list, datadir, name_converter):
         self.plugin_list = plugin_list
-        if datadir:
+
+        if not isinstance(datadir, fileFinder.caseless_dirlist):
             self.datadir = fileFinder.caseless_dirlist(datadir)
-        else:
-            self.datadir = None
+
         self.name_converter = name_converter
         self.graph = pluggraph.pluggraph()
         self.line_num = 0
@@ -249,7 +249,7 @@ class RuleParser:
             self.buffer = buff[pos:].lstrip()
             matches = self._expand_filename(plugin_name)
             if matches:
-                
+
                 if len(matches) > 1:
                     parse_logger.debug("parse_plugin_name new name=%s" % plugin_name)
 
@@ -259,7 +259,7 @@ class RuleParser:
                 #     self.buffer = " ".join(matches) + " " + self.buffer
                 # return True, plugin_name
                 return True, matches
-                    
+
 
             self.parse_dbg_indent = self.parse_dbg_indent[:-2]
             return False, [plugin_name]
@@ -272,31 +272,31 @@ class RuleParser:
         self.parse_dbg_indent += "  "
         prev = []
         n_order = 0
-        
+
         # read all lines in the rule
         while self._readline():
-            
+
             if re_rule.match(self.buffer):
                 self.parse_dbg_indent = self.parse_dbg_indent[:-2]
                 return
-            
+
             matches = self._parse_plugin_name()[1]
-            
+
             # go through all matches of the current line
             for pnam in matches:
                 if pnam is None:
                     continue
                 n_order += 1
-                
+
                 if rule == "ORDER":
                     if len(prev) > 0:
                         for _prev in prev:
                             self.graph.add_edge(self._where(), _prev, pnam, self.out_stream)
-                
+
                 elif rule == "NEARSTART":
                     self.graph.nearstart.append(pnam)
                     self.graph.nodes.setdefault(pnam, [])
-                
+
                 elif rule == "NEAREND":
                     self.graph.nearend.append(pnam)
                     self.graph.nodes.setdefault(pnam, [])

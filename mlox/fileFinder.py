@@ -43,6 +43,7 @@ class caseless_dirlist:
             return
         if isinstance(dir, caseless_dirlist):
             self.dir = dir.dirpath()
+            self.append_files_from_directory(self.dir)
         elif isinstance(dir, list):
             for directory in dir:
                 self.append_files_from_directory(directory)
