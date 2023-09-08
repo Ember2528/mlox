@@ -210,9 +210,6 @@ class configHandler():
             files.append(os.path.basename(f))
 
         (files, dups) = caseless_uniq(files)
-        # Deal with duplicates
-        for f in dups:
-            logging.warning("Duplicate plugin found in data directory: {0}".format(f))
 
         return files
 
