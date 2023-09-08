@@ -16,7 +16,7 @@ re_rule = re.compile(r'^\[(version|order|nearend|nearstart|conflict|note|patch|r
 # line for multiline messages
 re_message = re.compile(r'^\s')
 # pattern used to match a string that should only contain a plugin name, no slop
-re_plugin = re.compile(r'^(\S.*?\.(?:es[mp]|omwaddon|omwscripts)\b)([\s]*)', re.IGNORECASE)
+re_plugin = re.compile(r'^(\S.*?\.(?:es[mp]|omwaddon|omwscripts|omwgame)\b)([\s]*)', re.IGNORECASE)
 # metacharacters for filename expansion
 re_plugin_meta = re.compile(r'([*?])')
 re_plugin_metaver = re.compile(r'(<VER>)', re.IGNORECASE)
@@ -27,7 +27,7 @@ re_end_fun = re.compile(r'^]\s*')
 re_desc_fun = re.compile(r'\[DESC\s*(!?)/([^/]+)/\s+([^]]+)]', re.IGNORECASE)
 re_mwselua_fun = re.compile(r'\[MWSE-LUA\s*(!?)/([^/]+)/\s+([^]]+)]', re.IGNORECASE)
 # for parsing a size predicate
-re_size_fun = re.compile(r'\[SIZE\s*(!?)(\d+)\s+(\S.*?\.(?:es[mp]|omwaddon|omwscripts)\b)\s*]', re.IGNORECASE)
+re_size_fun = re.compile(r'\[SIZE\s*(!?)(\d+)\s+(\S.*?\.(?:es[mp]|omwaddon|omwscripts|omwgame)\b)\s*]', re.IGNORECASE)
 
 # for parsing a version number
 ver_delim = r'[_.-]'
@@ -36,7 +36,7 @@ plugin_version = r'(\d+(?:%s?\d+)*[a-zA-Z]?)' % ver_delim
 re_alpha_tail = re.compile(r'(\d+)([a-z])', re.IGNORECASE)
 re_ver_fun = re.compile(r'\[VER\s*([=<>])\s*%s\s*([^]]+)]' % plugin_version, re.IGNORECASE)
 # for grabbing version numbers from filenames
-re_filename_version = re.compile(r'\D%s\D*\.(?:es[mp]|omwaddon|omwscripts)' % plugin_version, re.IGNORECASE)
+re_filename_version = re.compile(r'\D%s\D*\.(?:es[mp]|omwaddon|omwscripts|omwgame)' % plugin_version, re.IGNORECASE)
 # for grabbing version numbers from plugin header description fields
 re_header_version = re.compile(r'\b(?:version\b\D+|v(?:er)?\.?\s*)%s' % plugin_version, re.IGNORECASE)
 
