@@ -143,6 +143,8 @@ class MloxGui(QObject):
         self.Old = ""  # old original loadorder
         self.Msg = ""  # messages output
         self.can_update = True  # If the load order can be saved or not
+        self.openmw = False
+        self.vfs = False
 
         # Set up logging
         dbg_formatter = logging.Formatter('%(levelname)s (%(name)s): %(message)s')
@@ -196,7 +198,10 @@ class MloxGui(QObject):
         self.debug_window = ScrollableDialog()
         self.clipboard = my_app.clipboard()
 
-        self.analyze_loadorder(None, args.openmw, args.vfs)
+        self.openmw = args.openmw
+        self.vfs = args.vfs
+
+        self.analyze_loadorder(None, self.openmw, self.vfs)
 
         sys.exit(my_app.exec())
 
@@ -282,7 +287,7 @@ class MloxGui(QObject):
     def reload(self):
         self.can_update = True
         # TODO:  Properly handle reloading from a file
-        self.analyze_loadorder()
+        self.analyze_loadorder(None, self.openmw, self.vfs)
 
     @pyqtSlot()
     def commit(self):
