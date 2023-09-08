@@ -155,35 +155,25 @@ def find_game_dirs(openmw = False, vfs = False):
     This will attempt to find Morrowind's files first
     """
     game = None
+    gamedir = None
     datadir = None
     list_file = None
 
     cwd = caseless_dirlist()  # start our search in our current directory
-    gamedir = cwd.find_parent_dir("Morrowind.ini")
-    if gamedir is not None:
-        if openmw or vfs:
-            game = "OpenMw"
-            list_file = _find_openmw_dir().find_path("openmw.cfg")
-            if vfs:
-                datadir = None
-            else:
-                datadir = gamedir.find_path("Data Files")
-        else:
-            game = "Morrowind"
-            list_file = gamedir.find_path("Morrowind.ini")
-            datadir = gamedir.find_path("Data Files")
+    if openmw:
+        game = "OpenMw"
+        gamedir = cwd.find_parent_dir("openmw.cfg")
+        if gamedir:
+            list_file = gamedir.find_path("openmw.cfg")
     else:
-        gamedir = cwd.find_parent_dir("Oblivion.ini")
-        if gamedir is not None:
-            game = "Oblivion"
-            list_file = _get_Oblivion_plugins_file()
-            datadir = gamedir.find_path("Data")
-        else:
-            # Not running under a game directory, so we're probably testing
-            # assume plugins live in current directory.
-            datadir = os.path.abspath("..")
+        game = "Morrowind"
+        gamedir = cwd.find_parent_dir("Morrowind.ini")
+        if gamedir:
+            datadir = gamedir.find_path("Data Files")
+            list_file = gamedir.find_path("Morrowind.ini")
 
     file_logger.debug("Found Game:  {0}".format(game))
     file_logger.debug("Plugins file at:  {0}".format(list_file))
-    file_logger.debug("Data Files at: {0}".format(datadir))
+    # file_logger.debug("Data Files at: {0}".format(datadir))
+
     return game, list_file, datadir
