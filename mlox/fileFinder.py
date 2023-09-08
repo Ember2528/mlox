@@ -172,7 +172,7 @@ def find_game_dirs(openmw = False, vfs = False):
         if gamedir:
             list_file = gamedir.find_path("openmw.cfg")
             from configHandler import configHandler
-            datadir = configHandler.get_data_entries_from_config(list_file)
+            datadir = caseless_dirlist(configHandler.get_data_entries_from_config(list_file))
     else:
         game = "Morrowind"
         gamedir = cwd.find_parent_dir("Morrowind.ini")
