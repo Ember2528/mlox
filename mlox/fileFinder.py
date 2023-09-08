@@ -41,11 +41,17 @@ class caseless_dirlist:
         self.files = {}
         if dir is None:
             return
+        if isinstance(dir, list):
+            for directory in dir:
+                self.append_files_from_directory(directory)
         if isinstance(dir, caseless_dirlist):
             self.dir = dir.dirpath()
         else:
             self.dir = os.path.normpath(os.path.abspath(dir))
-        for f in [p for p in os.listdir(self.dir)]:
+        self.append_files_from_directory(dir)
+
+    def append_files_from_directory(self, directory):
+        for f in [p for p in os.listdir(directory)]:
             self.files[f.lower()] = f
 
     def find_file(self, file_name) -> Optional[str]:
@@ -165,6 +171,8 @@ def find_game_dirs(openmw = False, vfs = False):
         gamedir = cwd.find_parent_dir("openmw.cfg")
         if gamedir:
             list_file = gamedir.find_path("openmw.cfg")
+            import configHandler
+            datadir = configHandler.get_data_entries_from_config(list_file)
     else:
         game = "Morrowind"
         gamedir = cwd.find_parent_dir("Morrowind.ini")

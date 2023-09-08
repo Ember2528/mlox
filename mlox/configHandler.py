@@ -114,6 +114,31 @@ class configHandler():
         dated_plugins.sort()
         return [x[1] for x in dated_plugins]
 
+    @staticmethod
+    def get_data_entries_from_config(config_path) -> list:
+        if not config_path:
+            return []
+
+        data_entries = []
+        regex = configHandler.re_openmw_data
+        try:
+            file_handle = open(config_path, 'r')
+            for line in file_handle:
+                entry = regex.match(line.strip())
+                if entry:
+                    e = entry.group(1).strip()
+                    data_entries.append(e)
+            file_handle.close()
+        except IOError:
+            config_logger.error("Unable to open configuration file: {0}".format(config_path))
+            return []
+        except UnicodeDecodeError:
+            config_logger.error("Bad Characters in configuration file: {0}".format(config_path))
+            return []
+        # Deal with duplicates
+        (entries, dupes) = caseless_uniq(data_entries)
+        return entries
+
     def read(self):
         """
         Read a configuration file
