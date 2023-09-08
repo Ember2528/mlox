@@ -209,7 +209,7 @@ class configHandler():
         paths, path_dupes = caseless_uniq(paths)
 
         # actually get the files
-        data_files_temp = []
+        data_files_temp = {}
         # loop through all data paths and get the plugins
         for datapath in paths:
             # check if directory still exists
