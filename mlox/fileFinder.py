@@ -41,15 +41,14 @@ class caseless_dirlist:
         self.files = {}
         if dir is None:
             return
-        if isinstance(dir, list):
-            for directory in dir:
-                self.append_files_from_directory(directory)
-            return
         if isinstance(dir, caseless_dirlist):
             self.dir = dir.dirpath()
+        elif isinstance(dir, list):
+            for directory in dir:
+                self.append_files_from_directory(directory)
         else:
             self.dir = os.path.normpath(os.path.abspath(dir))
-        self.append_files_from_directory(dir)
+            self.append_files_from_directory(self.dir)
 
     def append_files_from_directory(self, directory):
         for f in [p for p in os.listdir(directory)]:
