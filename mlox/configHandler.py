@@ -26,6 +26,9 @@ def caseless_uniq(un_uniqed_files):
     return unique_files, filtered
 
 def partition_masters(file_list):
+    """
+    Given a list of plugins, put all master files (*.esm, *.omwgame) first without changing relative order
+    """
     masters = []
     non_masters = []
     master_extensions = [".esm", ".omwgame"]
