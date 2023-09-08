@@ -134,6 +134,7 @@ class RuleParser:
     def __init__(self, plugin_list, datadir, name_converter):
         self.plugin_list = plugin_list
 
+        self.datadir = None
         if not isinstance(datadir, fileFinder.caseless_dirlist):
             self.datadir = fileFinder.caseless_dirlist(datadir)
         else:
