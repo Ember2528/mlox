@@ -267,12 +267,10 @@ class Loadorder:
         # The "sorted" list will be a superset of all known plugin files,
         # but we only care about active plugins.
         sorted_datafiles = [f for f in sorted_plugins if f in self.order]
-        if self.game_type == "OpenMw":
-            (esm_files, esp_files, omwaddon_files, omwscript_files) = configHandler.partition_omwfiles(sorted_datafiles)
-            new_order_cname = esm_files + esp_files + omwaddon_files + omwscript_files
-        else:
-            (esm_files, esp_files) = configHandler.partition_esps_and_esms(sorted_datafiles)
-            new_order_cname = esm_files + esp_files
+
+        (masters, non_masters) = configHandler.partition_masters(sorted_datafiles)
+        new_order_cname = masters + non_masters
+
         self.new_order = list(map(self.caseless.truename, new_order_cname))
 
         order_logger.debug("New load order:")

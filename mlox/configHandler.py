@@ -25,39 +25,19 @@ def caseless_uniq(un_uniqed_files):
             lower_files.append(aFile.lower())
     return unique_files, filtered
 
+def partition_masters(file_list):
+    masters = []
+    non_masters = []
+    master_extensions = [".esm", ".omwgame"]
 
-def partition_esps_and_esms(filelist):
-    """Split filelist into separate lists for esms and esps, retaining order."""
-    esm_files = []
-    esp_files = []
-    for filename in filelist:
-        ext = filename[-4:].lower()
-        if ext == ".esp":
-            esp_files.append(filename)
-        elif ext == ".esm":
-            esm_files.append(filename)
-    return esm_files, esp_files
+    for filename in file_list:
+        _, ext = os.path.splitext(filename)
+        if ext.lower() in master_extensions:
+            masters.append(filename)
+        else:
+            non_masters.append(filename)
 
-def partition_omwfiles(filelist):
-    """Split filelist into separate lists for esms and esps and openmwaddons, retaining order."""
-    esm_files = []
-    esp_files = []
-    omwaddon_files = []
-    omwscript_files = []
-    for filename in filelist:
-        name, ext = os.path.splitext(filename)
-        ext = ext.lower()
-        if ext == ".esp":
-            esp_files.append(filename)
-        elif ext == ".esm":
-            esm_files.append(filename)
-        elif ext == ".omwaddon":
-            omwaddon_files.append(filename)
-        elif ext == ".omwscripts":
-            omwscript_files.append(filename)
-
-    return esm_files, esp_files, omwaddon_files, omwscript_files
-
+    return masters, non_masters
 
 class configHandler():
     """
@@ -211,13 +191,11 @@ class configHandler():
             for f in dups:
                 logging.warning("Duplicate plugin found in data directory: {0}".format(f))
 
-            (esm_files, esp_files, omwaddon_files, omwscript_files) = partition_omwfiles(files)
+            (masters, non_masters) = partition_masters(files)
 
             files = []
-            files.extend(esm_files)
-            files.extend(esp_files)
-            files.extend(omwaddon_files)
-            files.extend(omwscript_files)
+            files.extend(masters)
+            files.extend(non_masters)
 
             # add full paths
             for f in files:
@@ -408,19 +386,16 @@ class dataDirHandler:
         for f in dups:
             logging.warning("Duplicate plugin found in data directory: {0}".format(f))
 
-        # special handling for OpenMW
-        if self.game_type == "OpenMw":
-            (esm_files, esp_files, omwaddon_files, omwscript_files) = partition_omwfiles(files)
-            files = self._sort_by_date(esm_files)
-            files += self._sort_by_date(esp_files)
-            files += self._sort_by_date(omwaddon_files)
-            files += self._sort_by_date(omwscript_files)
-            return files
-
+        # TODO: Sort by date first then change partition func to return one list avoid all this concatenation
         # sort the plugins into load order by modification date (esm's first)
-        (esm_files, esp_files) = partition_esps_and_esms(files)
-        files = self._sort_by_date(esm_files)
-        files += self._sort_by_date(esp_files)
+        (masters, non_masters) = partition_masters(files)
+
+        # OpenMW uses only cfg order
+        if self.game_type == "OpenMw":
+            files = masters + non_masters
+        else:
+            files = self._sort_by_date(masters)
+            files += self._sort_by_date(non_masters)
 
         return files
 
