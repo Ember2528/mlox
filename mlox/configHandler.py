@@ -173,18 +173,25 @@ class configHandler():
 
         :return: An ordered list of content paths from the openmw.cfg
         """
+        content_files = []
         paths = []
         groundcovers = []
 
-        regex = self.read_regexes_data[self.fileType]
+        content_regex = self.re_openmw_plugin
+        data_regex = self.read_regexes_data[self.fileType]
         groundcover_regex = self.re_openmw_groundcover
         try:
             file_handle = open(self.configFile, 'r')
             for line in file_handle:
-                datapath = regex.match(line.strip())
+                datapath = data_regex.match(line.strip())
                 if datapath:
                     f = datapath.group(1).strip()
                     paths.append(f)
+
+                content = content_regex.match(line.strip())
+                if content:
+                    f = content.group(1).strip()
+                    content_files.append(f.lower())
 
                 groundcover = groundcover_regex.match(line.strip())
                 if groundcover:
@@ -199,9 +206,7 @@ class configHandler():
             config_logger.error("Bad Characters in configuration file: {0}".format(self.configFile))
             return []
         # Deal with duplicates
-        (paths, dups) = caseless_uniq(paths)
-        for f in dups:
-            config_logger.debug("Duplicate plugin found in config file: {0}".format(f))
+        paths, path_dupes = caseless_uniq(paths)
 
         # actually get the files
         data_files_temp = []
@@ -209,7 +214,7 @@ class configHandler():
         for datapath in paths:
             # check if directory still exists
             if not os.path.isdir(datapath):
-                logging.warning("Data folder in cnfig does not exist anymore: {0}".format(datapath))
+                logging.warning("Data folder in config does not exist anymore: {0}".format(datapath))
                 continue
 
             # get plugins in directory
@@ -219,22 +224,16 @@ class configHandler():
             for f in dups:
                 logging.warning("Duplicate plugin found in data directory: {0}".format(f))
 
-            (masters, non_masters) = partition_masters(files)
-
-            files = []
-            files.extend(masters)
-            files.extend(non_masters)
-
             # add full paths
             for f in files:
-                data_files_temp.append(os.path.join(datapath, f))
+                data_files_temp.append(f, os.path.join(datapath, f))
 
-        # todo sort esms first
         files = []
-        for f in self._sort_by_date_fullpath(data_files_temp):
-            files.append(os.path.basename(f))
 
-        (files, dups) = caseless_uniq(files)
+        content_files, dupes = caseless_uniq(content_files)
+        for filename in content_files:
+            if filename in data_files_temp:
+                files.append(data_files_temp[filename])
 
         return files
 
