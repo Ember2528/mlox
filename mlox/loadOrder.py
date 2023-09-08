@@ -301,7 +301,7 @@ class Loadorder:
         if not isinstance(self.new_order, list) or self.new_order == []:
             order_logger.error("Not saving blank load order.")
             return False
-        if self.datadir:
+        if self.datadir and self.game_type == "Morrowind":
             if configHandler.dataDirHandler(self.datadir, self.game_type).write(self.new_order):
                 self.is_sorted = True
         if isinstance(self.plugin_file, str):
