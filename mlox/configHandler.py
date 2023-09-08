@@ -226,7 +226,7 @@ class configHandler():
 
             # add full paths
             for f in files:
-                data_files_temp.append(f, os.path.join(datapath, f))
+                data_files_temp[f] = os.path.join(datapath, f)
 
         files = []
 
