@@ -233,7 +233,7 @@ class configHandler():
         content_files, dupes = caseless_uniq(content_files)
         for filename in content_files:
             if filename in data_files_temp:
-                files.append(filename)
+                files.append(os.path.basename(data_files_temp[filename]))
 
         return files
 
