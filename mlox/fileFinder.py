@@ -53,7 +53,7 @@ class caseless_dirlist:
 
     def append_files_from_directory(self, directory):
         for f in [p for p in os.listdir(directory)]:
-            self.files[f.lower()] = f
+            self.files[f.lower()] = os.path.join(directory, f)
 
     def find_file(self, file_name) -> Optional[str]:
         """
@@ -61,7 +61,10 @@ class caseless_dirlist:
         :param file_name: A case insensitive file name
         :returns: A case sensitive file name, or None
         """
-        return self.files.get(file_name.lower(), None)
+        filepath = self.files.get(file_name.lower(), None)
+        if not filepath:
+            return None
+        return os.path.basename(filepath)
 
     def find_path(self, file_name) -> Optional[str]:
         """
@@ -69,9 +72,9 @@ class caseless_dirlist:
         :param file_name: A case insensitive file name
         :returns: A case sensitive path, or None
         """
-        f = file_name.lower()
-        if f in self.files:
-            return os.path.join(self.dir, self.files[f])
+        name_lower = file_name.lower()
+        if name_lower in self.files:
+            return self.files[name_lower]
         return None
 
     def find_parent_dir(self, file_name):
