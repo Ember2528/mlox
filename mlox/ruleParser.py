@@ -136,6 +136,8 @@ class RuleParser:
 
         if not isinstance(datadir, fileFinder.caseless_dirlist):
             self.datadir = fileFinder.caseless_dirlist(datadir)
+        else:
+            self.datadir = datadir
 
         self.name_converter = name_converter
         self.graph = pluggraph.pluggraph()
